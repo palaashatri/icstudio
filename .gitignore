@@ -1,0 +1,9 @@
+/target/
+/artifacts/
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.project/checkpoints/*.local.json
