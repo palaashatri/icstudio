@@ -1,0 +1,17 @@
+[workspace]
+members = ["crates/platform"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+rust-version = "1.85"
+authors = ["ICStudio contributors"]
+repository = "https://github.com/palaashatri/icstudio"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
