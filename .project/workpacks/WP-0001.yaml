@@ -2,7 +2,7 @@ id: WP-0001
 title: Establish M0 reproducible factory
 capability: CAP-INFRA-BOOT
 milestone: M0
-status: review
+status: accepted
 priority: critical
 owner: chatgpt-gpt-5.6-thinking
 reviewer: independent-ci
@@ -57,6 +57,14 @@ artifacts:
     - capability-report.md
     - icstudio.spdx.json
     - cross-platform binaries
+  evidence:
+    workflow_run: 30773006326
+    accepted_commit: 07b0858a9bb4d8a2f2288dfa9eed5440d78efa05
+    gates:
+      - ubuntu-latest factory gate: passed
+      - macos-latest factory gate: passed
+      - windows-latest factory gate: passed
+      - reproducible Linux image: passed
 checkpoint:
-  last_green_commit: null
-  notes: Awaiting GitHub Actions and independent review before acceptance.
+  last_green_commit: 07b0858a9bb4d8a2f2288dfa9eed5440d78efa05
+  notes: M0 accepted. Resume from this commit or any later commit whose full M0 gate remains green.
