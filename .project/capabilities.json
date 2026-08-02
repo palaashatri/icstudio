@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "programme": "ICStudio 1.0",
-  "accepted_commit": null,
+  "accepted_commit": "07b0858a9bb4d8a2f2288dfa9eed5440d78efa05",
   "capabilities": [
-    {"id":"CAP-INFRA-BOOT","name":"Reproducible build and CI","status":"candidate","tier":0,"milestone":"M0","evidence":["Cargo.lock","rust-toolchain.toml","justfile",".github/workflows/ci.yml"],"limitations":["Awaiting independent CI acceptance"]},
+    {"id":"CAP-INFRA-BOOT","name":"Reproducible build and CI","status":"accepted","tier":0,"milestone":"M0","evidence":["Cargo.lock","rust-toolchain.toml","justfile",".github/workflows/ci.yml","GitHub Actions run 30773006326: Ubuntu, macOS, Windows, and Linux container passed"],"limitations":[]},
     {"id":"CAP-PROJ-DB","name":"Project/library/cell/view database","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-TXN","name":"Transactions, undo, and crash recovery","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Only programme checkpoints exist"]},
     {"id":"CAP-RPC","name":"Typed worker protocol","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Not implemented"]},
-    {"id":"CAP-MCP-BASE","name":"MCP lifecycle and discovery","status":"candidate","tier":0,"milestone":"M0","evidence":["crates/platform/src/bin/icstudio-mcp.rs","crates/platform/tests/mcp_stdio.rs"],"limitations":["Read-only stdio smoke surface","Minimal bootstrap JSON decoder","No HTTP transport"]},
+    {"id":"CAP-MCP-BASE","name":"MCP lifecycle and discovery","status":"accepted","tier":0,"milestone":"M0","evidence":["crates/platform/src/bin/icstudio-mcp.rs","crates/platform/tests/mcp_stdio.rs","GitHub Actions run 30773006326: stdio MCP smoke passed on Ubuntu, macOS, and Windows"],"limitations":["Read-only stdio smoke surface","Minimal bootstrap JSON decoder","No HTTP transport"]},
     {"id":"CAP-MCP-READ","name":"Revisioned engineering resources","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Only programme status is readable"]},
     {"id":"CAP-MCP-MUTATE","name":"Transactional semantic design patches","status":"planned","tier":0,"milestone":"M2","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-MCP-JOBS","name":"Cancellable solver jobs","status":"planned","tier":0,"milestone":"M2","evidence":[],"limitations":["Not implemented"]},
@@ -45,6 +45,6 @@
     {"id":"CAP-PHOTONICS","name":"Photonic design and simulation","status":"planned","tier":0,"milestone":"M6","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-OPTIMIZE","name":"Optimization, variation, and yield","status":"planned","tier":0,"milestone":"M6","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-FLOW-OPENPDK","name":"Qualified end-to-end open-PDK flow","status":"planned","tier":0,"milestone":"M8","evidence":[],"limitations":["Not implemented"]},
-    {"id":"CAP-RELEASE","name":"Signed cross-platform release","status":"candidate","tier":0,"milestone":"M0","evidence":[".github/workflows/release-builds.yml"],"limitations":["Bootstrap CLI and MCP binaries only","No desktop application installers"]}
+    {"id":"CAP-RELEASE","name":"Signed cross-platform release","status":"candidate","tier":0,"milestone":"M0","evidence":[".github/workflows/release-builds.yml"],"limitations":["Native target matrix is defined but has not been exercised by a version tag","Bootstrap CLI and MCP binaries only","No desktop application installers","No signing or notarization"]}
   ]
 }
