@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install pinned Rust toolchain
         shell: bash
@@ -73,7 +73,7 @@ jobs:
 
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build factory image
         run: docker build --file Dockerfile.build --tag icstudio-m0:ci .
