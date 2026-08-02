@@ -180,9 +180,9 @@ fn extract_raw_id(input: &str) -> Option<String> {
     let tail = &input[key + "\"id\"".len()..];
     let colon = tail.find(':')?;
     let value = tail[colon + 1..].trim_start();
-    if value.starts_with('"') {
+    if let Some(stripped) = value.strip_prefix('"') {
         let mut escaped = false;
-        for (index, character) in value[1..].char_indices() {
+        for (index, character) in stripped.char_indices() {
             if escaped {
                 escaped = false;
             } else if character == '\\' {
