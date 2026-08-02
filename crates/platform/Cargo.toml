@@ -1,0 +1,21 @@
+[package]
+name = "icstudio-platform"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ICStudio platform bootstrap, project state, truth scoring, and MCP gateway"
+
+[lib]
+name = "icstudio_platform"
+path = "src/lib.rs"
+
+[[bin]]
+name = "icstudio"
+path = "src/bin/icstudio.rs"
+
+[[bin]]
+name = "icstudio-mcp"
+path = "src/bin/icstudio-mcp.rs"
