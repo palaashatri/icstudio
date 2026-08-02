@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "final_target": "ICStudio 1.0 as defined by AGENTS.md M8",
+  "score_formula": "sum(milestone.weight * milestone.completion)",
+  "reported_score": 2.0,
+  "assessment": "M0 factory candidate only. No schematic, layout, PDK, simulation, verification, extraction, EM, thermal, photonic, optimization, or tapeout capability exists.",
+  "milestones": [
+    {"id":"M0","name":"Constitution and reproducible factory","weight":2.0,"completion":1.0,"status":"candidate","evidence":["Cross-platform CI configuration","Dependency-free Rust bootstrap","stdio MCP smoke server","Checkpoint and resume validation","SPDX SBOM generator","MIT licence check"]},
+    {"id":"M1","name":"Design kernel and headless skeleton","weight":6.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M2","name":"Schematic to reference simulation","weight":13.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M3","name":"Layout, transient, and verification loop","weight":18.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M4","name":"ADE experiments and open-PDK beta","weight":15.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M5","name":"Parallel solver expansion I","weight":14.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M6","name":"All solver classes represented","weight":14.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M7","name":"Convergence, acceleration, and parity audit","weight":8.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M8","name":"Tapeout evidence and 1.0 release","weight":10.0,"completion":0.0,"status":"not-started","evidence":[]}
+  ],
+  "known_risks": [
+    "M0 code has not yet been accepted on the protected baseline",
+    "The bootstrap MCP decoder is deliberately minimal and not a general JSON implementation",
+    "Cross-platform workflows must run successfully before M0 can be marked accepted"
+  ]
+}
