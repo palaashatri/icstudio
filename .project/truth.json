@@ -3,9 +3,9 @@
   "final_target": "ICStudio 1.0 as defined by AGENTS.md M8",
   "score_formula": "sum(milestone.weight * milestone.completion)",
   "reported_score": 2.0,
-  "assessment": "M0 factory candidate only. No schematic, layout, PDK, simulation, verification, extraction, EM, thermal, photonic, optimization, or tapeout capability exists.",
+  "assessment": "M0 reproducible factory accepted on commit 07b0858a9bb4d8a2f2288dfa9eed5440d78efa05 by GitHub Actions run 30773006326. No schematic, layout, PDK, simulation, verification, extraction, EM, thermal, photonic, optimization, or tapeout capability exists.",
   "milestones": [
-    {"id":"M0","name":"Constitution and reproducible factory","weight":2.0,"completion":1.0,"status":"candidate","evidence":["Cross-platform CI configuration","Dependency-free Rust bootstrap","stdio MCP smoke server","Checkpoint and resume validation","SPDX SBOM generator","MIT licence check"]},
+    {"id":"M0","name":"Constitution and reproducible factory","weight":2.0,"completion":1.0,"status":"accepted","evidence":["GitHub Actions run 30773006326","Ubuntu factory gate passed","macOS factory gate passed","Windows factory gate passed","Reproducible Linux container passed","Dependency-free Rust bootstrap","stdio MCP smoke server","Checkpoint and resume validation","SPDX SBOM generator","MIT licence check"]},
     {"id":"M1","name":"Design kernel and headless skeleton","weight":6.0,"completion":0.0,"status":"not-started","evidence":[]},
     {"id":"M2","name":"Schematic to reference simulation","weight":13.0,"completion":0.0,"status":"not-started","evidence":[]},
     {"id":"M3","name":"Layout, transient, and verification loop","weight":18.0,"completion":0.0,"status":"not-started","evidence":[]},
@@ -16,8 +16,8 @@
     {"id":"M8","name":"Tapeout evidence and 1.0 release","weight":10.0,"completion":0.0,"status":"not-started","evidence":[]}
   ],
   "known_risks": [
-    "M0 code has not yet been accepted on the protected baseline",
     "The bootstrap MCP decoder is deliberately minimal and not a general JSON implementation",
-    "Cross-platform workflows must run successfully before M0 can be marked accepted"
+    "The release-build workflow defines native targets but has not yet been exercised by a version tag",
+    "M1 design database, geometry, typed worker protocol, PDK runtime, and revisioned MCP resources remain unimplemented"
   ]
 }
