@@ -54,10 +54,11 @@ pub fn truth_score(root: &Path) -> Result<f64, String> {
             .find("\"completion\"")
             .ok_or_else(|| "truth milestone is missing completion".to_string())?;
         let completion_key = weight_key + completion_rel;
-        let completion =
-            parse_number_after(&input, completion_key + "\"completion\"".len())?;
+        let completion = parse_number_after(&input, completion_key + "\"completion\"".len())?;
         if !(0.0..=1.0).contains(&completion) {
-            return Err(format!("milestone completion must be between 0 and 1, got {completion}"));
+            return Err(format!(
+                "milestone completion must be between 0 and 1, got {completion}"
+            ));
         }
         score += weight * completion;
         milestones += 1;
@@ -90,7 +91,10 @@ pub fn validate_project_state(root: &Path) -> Result<(), String> {
     ] {
         let path = root.join(relative);
         if !path.is_file() {
-            return Err(format!("required project file is missing: {}", path.display()));
+            return Err(format!(
+                "required project file is missing: {}",
+                path.display()
+            ));
         }
     }
 
@@ -174,7 +178,10 @@ pub fn create_checkpoint(root: &Path, name: &str) -> Result<PathBuf, String> {
         .map_err(|error| format!("failed to create {}: {error}", checkpoint_dir.display()))?;
     let destination = checkpoint_dir.join(format!("{name}.json"));
     if destination.exists() {
-        return Err(format!("checkpoint already exists: {}", destination.display()));
+        return Err(format!(
+            "checkpoint already exists: {}",
+            destination.display()
+        ));
     }
 
     let capabilities = read_required(&root.join(CAPABILITIES_PATH))?;
@@ -365,9 +372,9 @@ fn validate_checkpoint_name(name: &str) -> Result<(), String> {
         return Err("checkpoint names must start with CP-".to_string());
     }
     if name.len() > 96
-        || !name
-            .chars()
-            .all(|character| character.is_ascii_alphanumeric() || character == '-' || character == '_')
+        || !name.chars().all(|character| {
+            character.is_ascii_alphanumeric() || character == '-' || character == '_'
+        })
     {
         return Err("checkpoint name contains unsafe characters".to_string());
     }

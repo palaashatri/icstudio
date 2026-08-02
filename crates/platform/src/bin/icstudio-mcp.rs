@@ -194,7 +194,9 @@ fn extract_raw_id(input: &str) -> Option<String> {
         None
     } else {
         let length = value
-            .find(|character: char| character == ',' || character == '}' || character.is_whitespace())
+            .find(|character: char| {
+                character == ',' || character == '}' || character.is_whitespace()
+            })
             .unwrap_or(value.len());
         Some(value[..length].to_string())
     }
