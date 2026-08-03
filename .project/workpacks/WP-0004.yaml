@@ -1,0 +1,70 @@
+id: WP-0004
+title: Complete M1 desktop shell and surface-equivalence gate
+capabilities:
+  - CAP-PROJ-DB
+  - CAP-RPC
+  - CAP-MCP-READ
+milestone: M1
+status: active
+priority: critical
+owner: chatgpt-gpt-5.6-thinking
+reviewer: independent-ci
+qa_owner: independent-ci
+depends_on:
+  - WP-0002
+  - WP-0003
+contracts:
+  inputs:
+    - AGENTS.md#5-authoritative-state
+    - AGENTS.md#11-workbench-and-desktop-ux
+    - AGENTS.md#17-M1
+    - schemas/project-v1.txt
+  outputs:
+    - Electron and React desktop shell scaffold
+    - WebGPU scene prototype
+    - least-privilege UI snapshot bridge
+    - immutable renderer snapshot contract
+    - CLI UI MCP state-and-revision equivalence proof
+allowed_paths:
+  - apps/workbench/**
+  - crates/platform/**
+  - schemas/**
+  - .project/**
+  - .github/workflows/**
+  - .gitignore
+  - justfile
+  - README.md
+forbidden_paths:
+  - AGENTS.md
+acceptance:
+  commands:
+    - just build
+    - just test-fast
+    - just ui-check
+    - just validate
+    - just license-check
+  tests:
+    - ui_surface_equivalence::cli_ui_and_mcp_display_identical_project_state_and_revision
+    - workbench::renderer_preserves_authoritative_state_and_revision
+    - workbench::renderer_rejects_expanded_or_malformed_project_contracts
+  security:
+    - Electron contextIsolation enabled
+    - Electron sandbox enabled
+    - Electron nodeIntegration disabled
+    - renderer has no filesystem or subprocess access
+  mandatory_gate:
+    - CLI UI and MCP display the same project state and revision
+clean_room:
+  proprietary_inputs_used: false
+  public_sources:
+    - Electron public APIs
+    - React public APIs
+    - WebGPU public specification and browser APIs
+limitations:
+  - M1 shell is a project-state and WebGPU scene prototype, not a schematic or layout editor
+  - Electron packaging signing notarization and installers are deferred
+  - UI is read-only and exposes no semantic design mutation
+  - WebGPU availability depends on the host runtime and adapter
+checkpoint:
+  last_green_commit: null
+  notes: Awaiting locked npm graph and strict cross-platform acceptance.
