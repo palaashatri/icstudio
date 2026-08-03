@@ -2,11 +2,11 @@
   "schema_version": 1,
   "final_target": "ICStudio 1.0 as defined by AGENTS.md M8",
   "score_formula": "sum(milestone.weight * milestone.completion)",
-  "reported_score": 2.0,
-  "assessment": "M0 reproducible factory accepted on commit 07b0858a9bb4d8a2f2288dfa9eed5440d78efa05 by GitHub Actions run 30773006326. No schematic, layout, PDK, simulation, verification, extraction, EM, thermal, photonic, optimization, or tapeout capability exists.",
+  "reported_score": 5.0,
+  "assessment": "M0 is accepted. A substantial M1 headless foundation is accepted on commit c63c0b87c958bb11ce9c49a2b18851fd0075f96a by GitHub Actions run 30774870611: authoritative project hierarchy, revision-safe transactions, deterministic persistence, crash recovery, exact integer rectangles, a million-shape spatial-index baseline, typed worker envelopes, process crash isolation, and equivalent CLI/MCP project summaries. M1 is not complete because the desktop shell, UI state consumer, PDK base, netlist IR, result DB, and GDSII/SPICE parser scaffolds are not implemented.",
   "milestones": [
     {"id":"M0","name":"Constitution and reproducible factory","weight":2.0,"completion":1.0,"status":"accepted","evidence":["GitHub Actions run 30773006326","Ubuntu factory gate passed","macOS factory gate passed","Windows factory gate passed","Reproducible Linux container passed","Dependency-free Rust bootstrap","stdio MCP smoke server","Checkpoint and resume validation","SPDX SBOM generator","MIT licence check"]},
-    {"id":"M1","name":"Design kernel and headless skeleton","weight":6.0,"completion":0.0,"status":"not-started","evidence":[]},
+    {"id":"M1","name":"Design kernel and headless skeleton","weight":6.0,"completion":0.5,"status":"in-progress","evidence":["GitHub Actions run 30774870611","Project create/save/reopen hierarchy test passed on Linux macOS and Windows","Injected-termination journal recovery test passed","Deterministic serialization round trip passed","One-million-shape geometry baseline passed on Ubuntu release build","Worker crash isolation passed on Linux macOS and Windows","CLI and MCP project state/revision equivalence passed","Project and RPC version-1 schemas published"]},
     {"id":"M2","name":"Schematic to reference simulation","weight":13.0,"completion":0.0,"status":"not-started","evidence":[]},
     {"id":"M3","name":"Layout, transient, and verification loop","weight":18.0,"completion":0.0,"status":"not-started","evidence":[]},
     {"id":"M4","name":"ADE experiments and open-PDK beta","weight":15.0,"completion":0.0,"status":"not-started","evidence":[]},
@@ -18,6 +18,10 @@
   "known_risks": [
     "The bootstrap MCP decoder is deliberately minimal and not a general JSON implementation",
     "The release-build workflow defines native targets but has not yet been exercised by a version tag",
-    "M1 design database, geometry, typed worker protocol, PDK runtime, and revisioned MCP resources remain unimplemented"
+    "The reference spatial index has deterministic semantics but is not yet a production R-tree or hierarchical layout index",
+    "Project metadata replacement relies on the ready journal for recovery across the remove-and-rename window",
+    "No desktop UI consumes authoritative snapshots yet",
+    "No PDK runtime, netlist IR, result database, GDSII parser, or SPICE parser exists",
+    "No schematic, layout, simulation, verification, extraction, EM, thermal, photonic, optimization, or tapeout capability exists"
   ]
 }
