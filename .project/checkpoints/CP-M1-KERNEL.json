@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "name": "CP-M1-KERNEL",
+  "created_unix": 1785744960,
+  "git_commit": "b20a390b9bd051c263e332ce583ef7bc4dc6c2e7",
+  "capabilities_hash": "eed8d13f07a73d8b",
+  "truth_hash": "efa807d83b7b0efa",
+  "truth_score": 8.00
+}
