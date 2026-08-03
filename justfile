@@ -4,7 +4,7 @@ bootstrap:
     cargo fetch --locked
 
 ui-bootstrap:
-    node apps/workbench/scripts/run-npm.mjs install --ignore-scripts --no-audit --no-fund
+    node apps/workbench/scripts/run-npm.mjs ci --ignore-scripts --no-audit --no-fund
 
 format:
     cargo fmt --all
