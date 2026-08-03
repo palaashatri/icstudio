@@ -282,22 +282,18 @@ mod tests {
 
     #[test]
     fn notification_has_no_response_id() {
-        let request = Request::parse(
-            r#"{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}"#,
-        )
-        .expect("parse notification");
+        let request =
+            Request::parse(r#"{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}"#)
+                .expect("parse notification");
         assert_eq!(request.id, None);
     }
 
     #[test]
     fn duplicate_and_unknown_top_level_fields_are_rejected() {
+        assert!(Request::parse(r#"{"jsonrpc":"2.0","id":1,"id":2,"method":"ping"}"#).is_err());
         assert!(
-            Request::parse(r#"{"jsonrpc":"2.0","id":1,"id":2,"method":"ping"}"#)
+            Request::parse(r#"{"jsonrpc":"2.0","id":1,"method":"ping","unexpected":true}"#)
                 .is_err()
         );
-        assert!(Request::parse(
-            r#"{"jsonrpc":"2.0","id":1,"method":"ping","unexpected":true}"#
-        )
-        .is_err());
     }
 }

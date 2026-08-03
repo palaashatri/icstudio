@@ -161,10 +161,12 @@ mod tests {
         assert_eq!(translated, Rect::new(10, 25, 30, 35).expect("expected"));
         assert!(original.intersects(Rect::new(10, 5, 20, 10).expect("touching")));
         assert!(!original.intersects(Rect::new(11, 6, 20, 10).expect("separate")));
-        assert!(Rect::new(i64::MAX, 0, i64::MAX, 1)
-            .expect("maximum")
-            .translated(1, 0)
-            .is_err());
+        assert!(
+            Rect::new(i64::MAX, 0, i64::MAX, 1)
+                .expect("maximum")
+                .translated(1, 0)
+                .is_err()
+        );
     }
 
     #[test]

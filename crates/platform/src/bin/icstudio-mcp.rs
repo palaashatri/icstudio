@@ -1,8 +1,8 @@
 mod jsonrpc;
 
 use icstudio_platform::{
-    capability_report_markdown, escape_json, project_root_from_env, read_required, truth_score,
-    CAPABILITIES_PATH, MCP_PROTOCOL_VERSION, TRUTH_PATH,
+    CAPABILITIES_PATH, MCP_PROTOCOL_VERSION, TRUTH_PATH, capability_report_markdown, escape_json,
+    project_root_from_env, read_required, truth_score,
 };
 use icstudio_project::ProjectStore;
 use jsonrpc::{Object, Request};
@@ -99,12 +99,7 @@ fn resources_list(id: &str, active_project: Option<&Path>) -> String {
     )
 }
 
-fn resources_read(
-    id: &str,
-    params: &Object,
-    root: &Path,
-    active_project: Option<&Path>,
-) -> String {
+fn resources_read(id: &str, params: &Object, root: &Path, active_project: Option<&Path>) -> String {
     let uri = match params.required_string("uri") {
         Ok(value) => value,
         Err(error) => return error_response(id, -32602, &error),
@@ -186,16 +181,11 @@ fn text_resource(id: &str, uri: &str, body: &str) -> String {
 fn tools_list(id: &str) -> String {
     success(
         id,
-        "{\"tools\":[{\"name\":\"capability.report\",\"title\":\"Report ICStudio capabilities\",\"description\":\"Return the evidence-backed capability matrix and conservative truth score.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"annotations\":{\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":true,\"openWorldHint\":false}},{\"name\":\"project.inspect\",\"title\":\"Inspect active ICStudio project\",\"description\":\"Return the same authoritative project and revision summary exposed by the CLI.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"annotations\":{\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":true,\"openWorldHint\":false}}]}"
+        "{\"tools\":[{\"name\":\"capability.report\",\"title\":\"Report ICStudio capabilities\",\"description\":\"Return the evidence-backed capability matrix and conservative truth score.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"annotations\":{\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":true,\"openWorldHint\":false}},{\"name\":\"project.inspect\",\"title\":\"Inspect active ICStudio project\",\"description\":\"Return the same authoritative project and revision summary exposed by the CLI.\",\"inputSchema\":{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false},\"annotations\":{\"readOnlyHint\":true,\"destructiveHint\":false,\"idempotentHint\":true,\"openWorldHint\":false}}]}",
     )
 }
 
-fn tools_call(
-    id: &str,
-    params: &Object,
-    root: &Path,
-    active_project: Option<&Path>,
-) -> String {
+fn tools_call(id: &str, params: &Object, root: &Path, active_project: Option<&Path>) -> String {
     let name = match params.required_string("name") {
         Ok(value) => value,
         Err(error) => return error_response(id, -32602, &error),
@@ -250,7 +240,7 @@ fn project_inspect_tool(id: &str, active_project: Option<&Path>) -> String {
 fn prompts_list(id: &str) -> String {
     success(
         id,
-        "{\"prompts\":[{\"name\":\"icstudio.m0.status\",\"title\":\"Review ICStudio programme status\",\"description\":\"Evaluate capability evidence without overstating implementation.\",\"arguments\":[]},{\"name\":\"icstudio.project.review\",\"title\":\"Review active project hierarchy\",\"description\":\"Inspect the bounded revision-addressed project summary.\",\"arguments\":[]}]}"
+        "{\"prompts\":[{\"name\":\"icstudio.m0.status\",\"title\":\"Review ICStudio programme status\",\"description\":\"Evaluate capability evidence without overstating implementation.\",\"arguments\":[]},{\"name\":\"icstudio.project.review\",\"title\":\"Review active project hierarchy\",\"description\":\"Inspect the bounded revision-addressed project summary.\",\"arguments\":[]}]}",
     )
 }
 
@@ -262,11 +252,11 @@ fn prompts_get(id: &str, params: &Object) -> String {
     match name.as_str() {
         "icstudio.m0.status" => success(
             id,
-            "{\"description\":\"Evidence-first milestone review\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"Read icstudio://status, call capability.report, identify unverified claims, and report the truth score. Do not infer solver or editor functionality that is not supported by evidence.\"}}]}"
+            "{\"description\":\"Evidence-first milestone review\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"Read icstudio://status, call capability.report, identify unverified claims, and report the truth score. Do not infer solver or editor functionality that is not supported by evidence.\"}}]}",
         ),
         "icstudio.project.review" => success(
             id,
-            "{\"description\":\"Revision-safe project review\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"Call project.inspect and report the active project ID, revision, and hierarchy counts. Treat the returned revision as immutable context and do not request mutations.\"}}]}"
+            "{\"description\":\"Revision-safe project review\",\"messages\":[{\"role\":\"user\",\"content\":{\"type\":\"text\",\"text\":\"Call project.inspect and report the active project ID, revision, and hierarchy counts. Treat the returned revision as immutable context and do not request mutations.\"}}]}",
         ),
         _ => error_response(id, -32602, &format!("unknown prompt: {name}")),
     }

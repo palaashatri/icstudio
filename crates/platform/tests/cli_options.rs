@@ -32,5 +32,8 @@ fn an_option_cannot_consume_the_next_option_as_its_value() {
         .expect("run CLI");
     assert!(!output.status.success());
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("--project-root requires a value") || stderr.contains("--output requires a value"));
+    assert!(
+        stderr.contains("--project-root requires a value")
+            || stderr.contains("--output requires a value")
+    );
 }
