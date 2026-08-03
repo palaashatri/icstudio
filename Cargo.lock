@@ -5,3 +5,10 @@ version = 4
 [[package]]
 name = "icstudio-platform"
 version = "0.1.0"
+dependencies = [
+ "icstudio-project",
+]
+
+[[package]]
+name = "icstudio-project"
+version = "0.1.0"
