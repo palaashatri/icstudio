@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -21,43 +21,6 @@ env:
   RUST_BACKTRACE: "1"
 
 jobs:
-  fix-truth-tolerance:
-    name: Fix truth-score tolerance
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Check out implementation branch
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-        with:
-          ref: milestone/m0-reproducible-factory
-          persist-credentials: true
-
-      - name: Apply tolerance and commit
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          path = Path('crates/platform/src/lib.rs')
-          text = path.read_text()
-          old = 'assert!((score - 6.8).abs() < f64::EPSILON);'
-          new = 'assert!((score - 6.8).abs() < 1e-9);'
-          if old not in text:
-              raise SystemExit(0)
-          path.write_text(text.replace(old, new, 1))
-          PY
-          if git diff --quiet; then
-            exit 0
-          fi
-          rustup toolchain install 1.85.1 --profile minimal --component rustfmt
-          rustup override set 1.85.1
-          cargo fmt --all
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add crates/platform/src/lib.rs
-          git commit -m "test(platform): use stable truth-score tolerance"
-          git push origin HEAD:milestone/m0-reproducible-factory
-
   cross-platform-factory:
     name: ${{ matrix.os }} factory gate
     runs-on: ${{ matrix.os }}
