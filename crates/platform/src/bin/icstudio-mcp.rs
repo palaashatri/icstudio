@@ -1,8 +1,11 @@
+mod jsonrpc;
+
 use icstudio_platform::{
-    capability_report_markdown, escape_json, extract_named_string, project_root_from_env,
-    read_required, truth_score, CAPABILITIES_PATH, MCP_PROTOCOL_VERSION, TRUTH_PATH,
+    capability_report_markdown, escape_json, project_root_from_env, read_required, truth_score,
+    CAPABILITIES_PATH, MCP_PROTOCOL_VERSION, TRUTH_PATH,
 };
 use icstudio_project::ProjectStore;
+use jsonrpc::{Object, Request};
 use std::io::{self, BufRead, Write};
 use std::path::{Path, PathBuf};
 
@@ -24,28 +27,28 @@ fn main() {
             continue;
         }
 
-        let method = match extract_named_string(&line, "method") {
+        let request = match Request::parse(&line) {
             Ok(value) => value,
             Err(error) => {
-                let response = error_response("null", -32600, &error);
-                emit(&mut stdout, &response);
+                emit(&mut stdout, &error_response("null", -32600, &error));
                 continue;
             }
         };
-        if method.starts_with("notifications/") {
+        let Some(id) = request.id.as_deref() else {
             continue;
-        }
-        let id = extract_raw_id(&line).unwrap_or_else(|| "null".to_string());
-        let response = match method.as_str() {
-            "initialize" => initialize_response(&id, &line),
-            "ping" => success(&id, "{}"),
-            "resources/list" => resources_list(&id, active_project.as_deref()),
-            "resources/read" => resources_read(&id, &line, &root, active_project.as_deref()),
-            "tools/list" => tools_list(&id),
-            "tools/call" => tools_call(&id, &line, &root, active_project.as_deref()),
-            "prompts/list" => prompts_list(&id),
-            "prompts/get" => prompts_get(&id, &line),
-            _ => error_response(&id, -32601, &format!("method not found: {method}")),
+        };
+        let response = match request.method.as_str() {
+            "initialize" => initialize_response(id, &request.params),
+            "ping" => success(id, "{}"),
+            "resources/list" => resources_list(id, active_project.as_deref()),
+            "resources/read" => {
+                resources_read(id, &request.params, &root, active_project.as_deref())
+            }
+            "tools/list" => tools_list(id),
+            "tools/call" => tools_call(id, &request.params, &root, active_project.as_deref()),
+            "prompts/list" => prompts_list(id),
+            "prompts/get" => prompts_get(id, &request.params),
+            method => error_response(id, -32601, &format!("method not found: {method}")),
         };
         emit(&mut stdout, &response);
     }
@@ -57,9 +60,11 @@ fn emit(stdout: &mut impl Write, response: &str) {
     }
 }
 
-fn initialize_response(id: &str, request: &str) -> String {
-    let requested = extract_named_string(request, "protocolVersion")
-        .unwrap_or_else(|_| MCP_PROTOCOL_VERSION.to_string());
+fn initialize_response(id: &str, params: &Object) -> String {
+    let requested = match params.required_string("protocolVersion") {
+        Ok(value) => value,
+        Err(error) => return error_response(id, -32602, &error),
+    };
     if requested != MCP_PROTOCOL_VERSION {
         return error_response(
             id,
@@ -94,8 +99,13 @@ fn resources_list(id: &str, active_project: Option<&Path>) -> String {
     )
 }
 
-fn resources_read(id: &str, request: &str, root: &Path, active_project: Option<&Path>) -> String {
-    let uri = match extract_named_string(request, "uri") {
+fn resources_read(
+    id: &str,
+    params: &Object,
+    root: &Path,
+    active_project: Option<&Path>,
+) -> String {
+    let uri = match params.required_string("uri") {
         Ok(value) => value,
         Err(error) => return error_response(id, -32602, &error),
     };
@@ -180,8 +190,13 @@ fn tools_list(id: &str) -> String {
     )
 }
 
-fn tools_call(id: &str, request: &str, root: &Path, active_project: Option<&Path>) -> String {
-    let name = match extract_named_string(request, "name") {
+fn tools_call(
+    id: &str,
+    params: &Object,
+    root: &Path,
+    active_project: Option<&Path>,
+) -> String {
+    let name = match params.required_string("name") {
         Ok(value) => value,
         Err(error) => return error_response(id, -32602, &error),
     };
@@ -239,8 +254,8 @@ fn prompts_list(id: &str) -> String {
     )
 }
 
-fn prompts_get(id: &str, request: &str) -> String {
-    let name = match extract_named_string(request, "name") {
+fn prompts_get(id: &str, params: &Object) -> String {
+    let name = match params.required_string("name") {
         Ok(value) => value,
         Err(error) => return error_response(id, -32602, &error),
     };
@@ -266,31 +281,4 @@ fn error_response(id: &str, code: i32, message: &str) -> String {
         "{{\"jsonrpc\":\"2.0\",\"id\":{id},\"error\":{{\"code\":{code},\"message\":\"{}\"}}}}",
         escape_json(message)
     )
-}
-
-fn extract_raw_id(input: &str) -> Option<String> {
-    let key = input.find("\"id\"")?;
-    let tail = &input[key + "\"id\"".len()..];
-    let colon = tail.find(':')?;
-    let value = tail[colon + 1..].trim_start();
-    if let Some(stripped) = value.strip_prefix('"') {
-        let mut escaped = false;
-        for (index, character) in stripped.char_indices() {
-            if escaped {
-                escaped = false;
-            } else if character == '\\' {
-                escaped = true;
-            } else if character == '"' {
-                return Some(value[..index + 2].to_string());
-            }
-        }
-        None
-    } else {
-        let length = value
-            .find(|character: char| {
-                character == ',' || character == '}' || character.is_whitespace()
-            })
-            .unwrap_or(value.len());
-        Some(value[..length].to_string())
-    }
 }
