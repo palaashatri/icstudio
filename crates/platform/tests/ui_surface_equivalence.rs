@@ -44,19 +44,15 @@ fn cli_ui_and_mcp_display_identical_project_state_and_revision() {
         .commit(Transaction::new(0, "test-library", "integration").add_library("analog"))
         .expect("add library");
     store
-        .commit(
-            Transaction::new(1, "test-cell", "integration").add_cell("analog", "inverter"),
-        )
+        .commit(Transaction::new(1, "test-cell", "integration").add_cell("analog", "inverter"))
         .expect("add cell");
     store
-        .commit(
-            Transaction::new(2, "test-view", "integration").add_view(
-                "analog",
-                "inverter",
-                "schematic",
-                "schematic",
-            ),
-        )
+        .commit(Transaction::new(2, "test-view", "integration").add_view(
+            "analog",
+            "inverter",
+            "schematic",
+            "schematic",
+        ))
         .expect("add view");
     let expected = store.project().summary_json();
 
