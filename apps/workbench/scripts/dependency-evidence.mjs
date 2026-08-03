@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, realpath, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -59,6 +60,23 @@ function spdxId(name, version) {
   return `SPDXRef-NPM-${name}-${version}`.replace(/[^A-Za-z0-9.-]/g, "-");
 }
 
+const lockText = await readFile(path.join(workbenchRoot, "package-lock.json"), "utf8");
+const lock = JSON.parse(lockText);
+if (lock.lockfileVersion !== 3 || !lock.packages || typeof lock.packages !== "object") {
+  throw new Error("workbench package-lock.json must use npm lockfile version 3");
+}
+const lockHash = createHash("sha256").update(lockText).digest("hex");
+const lockedPackages = new Set();
+for (const [location, entry] of Object.entries(lock.packages)) {
+  if (!location || !entry || typeof entry !== "object") {
+    continue;
+  }
+  const name = entry.name ?? location.split("node_modules/").at(-1);
+  if (typeof name === "string" && typeof entry.version === "string") {
+    lockedPackages.add(`${name}@${entry.version}`);
+  }
+}
+
 const packages = new Map();
 const visitedDirectories = new Set();
 
@@ -85,6 +103,9 @@ async function collectPackage(packageDirectory) {
   }
   const license = licenseExpression(manifest);
   const key = `${manifest.name}@${manifest.version}`;
+  if (!lockedPackages.has(key)) {
+    throw new Error(`installed package is absent from package-lock.json: ${key}`);
+  }
   packages.set(key, {
     name: manifest.name,
     version: manifest.version,
@@ -141,6 +162,8 @@ if (!checkOnly) {
   const notices = {
     schemaVersion: 1,
     packageManager: "npm",
+    lockfileVersion: 3,
+    lockSha256: lockHash,
     packages: ordered
   };
   const sbom = {
@@ -148,7 +171,7 @@ if (!checkOnly) {
     dataLicense: "CC0-1.0",
     SPDXID: "SPDXRef-DOCUMENT",
     name: "icstudio-workbench",
-    documentNamespace: `https://github.com/palaashatri/icstudio/sbom/workbench-${ordered.length}`,
+    documentNamespace: `https://github.com/palaashatri/icstudio/sbom/workbench-${lockHash}`,
     creationInfo: {
       creators: ["Tool: icstudio-workbench-dependency-evidence"]
     },
@@ -173,4 +196,4 @@ if (!checkOnly) {
   );
 }
 
-console.log(`validated ${ordered.length} installed workbench packages`);
+console.log(`validated ${ordered.length} locked workbench packages`);
