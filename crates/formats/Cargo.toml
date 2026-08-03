@@ -1,0 +1,13 @@
+[package]
+name = "icstudio-formats"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Safe binary and text format parser scaffolds for ICStudio"
+
+[lib]
+name = "icstudio_formats"
+path = "src/lib.rs"
