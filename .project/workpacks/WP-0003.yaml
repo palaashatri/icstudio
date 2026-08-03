@@ -5,7 +5,7 @@ capabilities:
   - CAP-IO-GDS
   - CAP-WAVE
 milestone: M1
-status: review
+status: accepted
 priority: critical
 owner: chatgpt-gpt-5.6-thinking
 reviewer: independent-ci
@@ -65,6 +65,15 @@ limitations:
   - GDSII geometry and hierarchy are not interpreted
   - result vectors are local bounded scalar arrays only
   - no desktop UI consumes these schemas
+evidence:
+  accepted_commit: 8f432b17b9ffbb2dfc1228a5063d6d347b10abb7
+  workflow_run: 30776034205
+  gates:
+    - ubuntu-latest factory gate: passed
+    - macos-latest factory gate: passed
+    - windows-latest factory gate: passed
+    - reproducible pinned non-root Linux image: passed
+    - one-million-shape Ubuntu release baseline: passed
 checkpoint:
-  last_green_commit: null
-  notes: Awaiting strict cross-platform CI and evidence review.
+  last_green_commit: 8f432b17b9ffbb2dfc1228a5063d6d347b10abb7
+  notes: Remaining M1 headless schema tracks accepted. M1 remains in progress because the desktop/WebGPU and UI state-equivalence gate is not implemented.
