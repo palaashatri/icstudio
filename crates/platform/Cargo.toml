@@ -6,6 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
+autobins = false
 description = "ICStudio platform services, programme state, project commands, MCP gateway, and worker entry points"
 
 [dependencies]
