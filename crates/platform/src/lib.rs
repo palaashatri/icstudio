@@ -1,9 +1,8 @@
-//! ICStudio M0 platform primitives.
+//! ICStudio platform primitives and programme-evidence services.
 //!
-//! This crate deliberately has no third-party dependencies. The first milestone
-//! must remain reproducible and auditable while public schemas are still being
-//! frozen. Richer parsers and protocol types belong in later, independently
-//! reviewed work packages.
+//! The implementation remains dependency-free while M1 contracts are being frozen.
+//! Parsing and evidence operations are deliberately small, deterministic, and covered by
+//! regression tests before they are replaced by richer schema-generated implementations.
 
 use std::fs;
 use std::io::Write;
@@ -30,6 +29,13 @@ const REQUIRED_CAPABILITIES: &[&str] = &[
     "CAP-RELEASE",
 ];
 
+const WORKSPACE_CRATES: &[(&str, &str)] = &[
+    ("icstudio-geometry", "crates/geometry/Cargo.toml"),
+    ("icstudio-platform", "crates/platform/Cargo.toml"),
+    ("icstudio-project", "crates/project/Cargo.toml"),
+    ("icstudio-rpc", "crates/rpc/Cargo.toml"),
+];
+
 pub fn project_root_from_env() -> PathBuf {
     std::env::var_os("ICSTUDIO_PROJECT_ROOT")
         .map(PathBuf::from)
@@ -46,15 +52,21 @@ pub fn truth_score(root: &Path) -> Result<f64, String> {
     let mut score = 0.0;
     let mut milestones = 0;
 
-    while let Some(weight_key) = input[cursor..].find("\"weight\"") {
-        let weight_key = cursor + weight_key;
-        let weight = parse_number_after(&input, weight_key + "\"weight\"".len())?;
-        let remaining = &input[weight_key..];
-        let completion_rel = remaining
+    while let Some(id_rel) = input[cursor..].find("\"id\"") {
+        let id_key = cursor + id_rel;
+        let next_id = input[id_key + 1..]
+            .find("\"id\"")
+            .map(|value| id_key + 1 + value)
+            .unwrap_or(input.len());
+        let object = &input[id_key..next_id];
+        let weight = object
+            .find("\"weight\"")
+            .ok_or_else(|| "truth milestone is missing weight".to_string())
+            .and_then(|index| parse_number_after(object, index + "\"weight\"".len()))?;
+        let completion = object
             .find("\"completion\"")
-            .ok_or_else(|| "truth milestone is missing completion".to_string())?;
-        let completion_key = weight_key + completion_rel;
-        let completion = parse_number_after(&input, completion_key + "\"completion\"".len())?;
+            .ok_or_else(|| "truth milestone is missing completion".to_string())
+            .and_then(|index| parse_number_after(object, index + "\"completion\"".len()))?;
         if !(0.0..=1.0).contains(&completion) {
             return Err(format!(
                 "milestone completion must be between 0 and 1, got {completion}"
@@ -62,11 +74,11 @@ pub fn truth_score(root: &Path) -> Result<f64, String> {
         }
         score += weight * completion;
         milestones += 1;
-        cursor = completion_key + "\"completion\"".len();
+        cursor = next_id;
     }
 
     if milestones == 0 {
-        return Err("truth file contains no milestone weights".to_string());
+        return Err("truth file contains no milestone records".to_string());
     }
     Ok(score)
 }
@@ -177,12 +189,6 @@ pub fn create_checkpoint(root: &Path, name: &str) -> Result<PathBuf, String> {
     fs::create_dir_all(&checkpoint_dir)
         .map_err(|error| format!("failed to create {}: {error}", checkpoint_dir.display()))?;
     let destination = checkpoint_dir.join(format!("{name}.json"));
-    if destination.exists() {
-        return Err(format!(
-            "checkpoint already exists: {}",
-            destination.display()
-        ));
-    }
 
     let capabilities = read_required(&root.join(CAPABILITIES_PATH))?;
     let truth = read_required(&root.join(TRUTH_PATH))?;
@@ -200,7 +206,21 @@ pub fn create_checkpoint(root: &Path, name: &str) -> Result<PathBuf, String> {
         fnv1a64(truth.as_bytes()),
         truth_score(root)?
     );
-    write_text(&destination, &manifest)?;
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&destination)
+        .map_err(|error| {
+            if error.kind() == std::io::ErrorKind::AlreadyExists {
+                format!("checkpoint already exists: {}", destination.display())
+            } else {
+                format!("failed to create {}: {error}", destination.display())
+            }
+        })?;
+    file.write_all(manifest.as_bytes())
+        .map_err(|error| format!("failed to write {}: {error}", destination.display()))?;
+    file.sync_all()
+        .map_err(|error| format!("failed to sync {}: {error}", destination.display()))?;
     Ok(destination)
 }
 
@@ -233,18 +253,22 @@ pub fn resume_check(root: &Path, checkpoint_name: &str) -> Result<(), String> {
 
 pub fn license_check(root: &Path) -> Result<(), String> {
     let workspace = read_required(&root.join("Cargo.toml"))?;
-    let crate_manifest = read_required(&root.join("crates/platform/Cargo.toml"))?;
     let lock = read_required(&root.join("Cargo.lock"))?;
 
     if !workspace.contains("license = \"MIT\"") {
         return Err("workspace package licence is not MIT".to_string());
     }
-    if !crate_manifest.contains("license.workspace = true") {
-        return Err("platform crate does not inherit the workspace licence".to_string());
+    for (crate_name, manifest_path) in WORKSPACE_CRATES {
+        let manifest = read_required(&root.join(manifest_path))?;
+        if !manifest.contains("license.workspace = true") {
+            return Err(format!(
+                "{crate_name} does not inherit the workspace MIT licence"
+            ));
+        }
     }
     if lock.contains("source =") {
         return Err(
-            "M0 dependency policy violation: Cargo.lock contains an external package source"
+            "dependency policy violation: Cargo.lock contains an external package source"
                 .to_string(),
         );
     }
@@ -257,8 +281,17 @@ pub fn write_sbom(root: &Path, destination: &Path) -> Result<(), String> {
         "https://github.com/palaashatri/icstudio/sbom/{}",
         fnv1a64(read_required(&root.join("Cargo.lock"))?.as_bytes())
     );
+    let packages = WORKSPACE_CRATES
+        .iter()
+        .map(|(name, _)| {
+            format!(
+                "    {{\n      \"name\": \"{name}\",\n      \"SPDXID\": \"SPDXRef-Package-{name}\",\n      \"versionInfo\": \"0.1.0\",\n      \"downloadLocation\": \"NOASSERTION\",\n      \"filesAnalyzed\": false,\n      \"licenseConcluded\": \"MIT\",\n      \"licenseDeclared\": \"MIT\",\n      \"copyrightText\": \"Copyright (c) 2026 ICStudio contributors\"\n    }}"
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",\n");
     let sbom = format!(
-        "{{\n  \"spdxVersion\": \"SPDX-2.3\",\n  \"dataLicense\": \"CC0-1.0\",\n  \"SPDXID\": \"SPDXRef-DOCUMENT\",\n  \"name\": \"icstudio-m0\",\n  \"documentNamespace\": \"{document_namespace}\",\n  \"creationInfo\": {{\n    \"creators\": [\"Tool: icstudio-sbom-bootstrap\"]\n  }},\n  \"packages\": [{{\n    \"name\": \"icstudio-platform\",\n    \"SPDXID\": \"SPDXRef-Package-icstudio-platform\",\n    \"versionInfo\": \"0.1.0\",\n    \"downloadLocation\": \"NOASSERTION\",\n    \"filesAnalyzed\": false,\n    \"licenseConcluded\": \"MIT\",\n    \"licenseDeclared\": \"MIT\",\n    \"copyrightText\": \"Copyright (c) 2026 ICStudio contributors\"\n  }}]\n}}\n"
+        "{{\n  \"spdxVersion\": \"SPDX-2.3\",\n  \"dataLicense\": \"CC0-1.0\",\n  \"SPDXID\": \"SPDXRef-DOCUMENT\",\n  \"name\": \"icstudio-implementation\",\n  \"documentNamespace\": \"{document_namespace}\",\n  \"creationInfo\": {{\n    \"creators\": [\"Tool: icstudio-sbom-bootstrap\"]\n  }},\n  \"packages\": [\n{packages}\n  ]\n}}\n"
     );
     write_text(destination, &sbom)
 }
@@ -408,16 +441,37 @@ mod tests {
     #[test]
     fn truth_score_is_deliberately_conservative() {
         let score = truth_score(&repository_root()).expect("truth score");
-        assert!((score - 2.0).abs() < f64::EPSILON);
+        assert!((score - 5.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn truth_score_binds_weight_and_completion_to_one_milestone() {
+        let unique = format!(
+            "icstudio-truth-test-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("time")
+                .as_nanos()
+        );
+        let root = std::env::temp_dir().join(unique);
+        fs::create_dir_all(root.join(".project")).expect("project directory");
+        fs::write(
+            root.join(TRUTH_PATH),
+            "{\"milestones\":[{\"id\":\"M0\",\"completion\":1,\"weight\":2},{\"id\":\"M1\",\"weight\":6,\"completion\":0.5}],\"reported_score\":5}",
+        )
+        .expect("truth fixture");
+        assert!((truth_score(&root).expect("truth score") - 5.0).abs() < f64::EPSILON);
+        fs::remove_dir_all(root).expect("cleanup");
     }
 
     #[test]
     fn project_state_validates() {
-        validate_project_state(&repository_root()).expect("valid M0 state");
+        validate_project_state(&repository_root()).expect("valid implementation state");
     }
 
     #[test]
-    fn checkpoint_detects_state_drift() {
+    fn checkpoint_detects_state_drift_and_remains_immutable() {
         let unique = format!(
             "icstudio-checkpoint-test-{}-{}",
             std::process::id(),
@@ -429,7 +483,14 @@ mod tests {
         let root = std::env::temp_dir().join(unique);
         fs::create_dir_all(root.join(".project")).expect("project directory");
         fs::create_dir_all(root.join("toolchains")).expect("toolchain directory");
-        fs::create_dir_all(root.join("crates/platform")).expect("crate directory");
+        for (_, manifest_path) in WORKSPACE_CRATES {
+            let parent = root
+                .join(manifest_path)
+                .parent()
+                .expect("manifest parent")
+                .to_path_buf();
+            fs::create_dir_all(parent).expect("crate directory");
+        }
 
         for relative in ["AGENTS.md", "LICENSE"] {
             fs::write(root.join(relative), "test").expect("fixture");
@@ -439,11 +500,13 @@ mod tests {
             "[workspace.package]\nlicense = \"MIT\"\n",
         )
         .expect("workspace fixture");
-        fs::write(
-            root.join("crates/platform/Cargo.toml"),
-            "[package]\nlicense.workspace = true\n",
-        )
-        .expect("crate fixture");
+        for (_, manifest_path) in WORKSPACE_CRATES {
+            fs::write(
+                root.join(manifest_path),
+                "[package]\nlicense.workspace = true\n",
+            )
+            .expect("crate fixture");
+        }
         fs::write(
             root.join("Cargo.lock"),
             "version = 4\n[[package]]\nname = \"icstudio-platform\"\nversion = \"0.1.0\"\n",
@@ -460,17 +523,23 @@ mod tests {
         .expect("capabilities fixture");
         fs::write(
             root.join(TRUTH_PATH),
-            "{\"milestones\":[{\"weight\":2,\"completion\":1}],\"reported_score\":2}",
+            "{\"milestones\":[{\"id\":\"M0\",\"weight\":2,\"completion\":1}],\"reported_score\":2}",
         )
         .expect("truth fixture");
         fs::write(root.join("toolchains/mcp.lock"), MCP_PROTOCOL_VERSION)
             .expect("protocol fixture");
 
-        create_checkpoint(&root, "CP-TEST").expect("checkpoint creation");
+        let checkpoint = create_checkpoint(&root, "CP-TEST").expect("checkpoint creation");
+        let immutable_contents = fs::read_to_string(&checkpoint).expect("checkpoint contents");
+        assert!(create_checkpoint(&root, "CP-TEST").is_err());
+        assert_eq!(
+            fs::read_to_string(&checkpoint).expect("checkpoint contents"),
+            immutable_contents
+        );
         resume_check(&root, "CP-TEST").expect("checkpoint should match");
         fs::write(
             root.join(TRUTH_PATH),
-            "{\"milestones\":[{\"weight\":2,\"completion\":0}],\"reported_score\":0}",
+            "{\"milestones\":[{\"id\":\"M0\",\"weight\":2,\"completion\":0}],\"reported_score\":0}",
         )
         .expect("truth mutation");
         assert!(resume_check(&root, "CP-TEST").is_err());
