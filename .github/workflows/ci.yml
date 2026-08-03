@@ -24,7 +24,7 @@ jobs:
   cross-platform-factory:
     name: ${{ matrix.os }} factory gate
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 25
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -49,8 +49,12 @@ jobs:
       - name: Bootstrap
         run: just bootstrap
 
-      - name: Run M0 gate
+      - name: Run cross-platform gate
         run: just ci
+
+      - name: Run M1 million-shape baseline
+        if: matrix.os == 'ubuntu-latest'
+        run: just test-m1-geometry
 
       - name: Generate evidence
         run: |
@@ -58,10 +62,10 @@ jobs:
           just sbom
           just truth
 
-      - name: Upload M0 evidence
+      - name: Upload programme evidence
         uses: actions/upload-artifact@v4
         with:
-          name: m0-evidence-${{ matrix.os }}
+          name: programme-evidence-${{ matrix.os }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
@@ -69,14 +73,14 @@ jobs:
   linux-container:
     name: Reproducible Linux image
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
 
     steps:
       - name: Check out source
         uses: actions/checkout@v5
 
       - name: Build factory image
-        run: docker build --file Dockerfile.build --tag icstudio-m0:ci .
+        run: docker build --file Dockerfile.build --tag icstudio-implementation:ci .
 
       - name: Verify image truth command
-        run: docker run --rm icstudio-m0:ci truth
+        run: docker run --rm icstudio-implementation:ci truth
