@@ -18,6 +18,9 @@ build:
 test-fast:
     cargo test --workspace --all-targets --locked
 
+test-m1-geometry:
+    cargo test --release --locked -p icstudio-geometry indexes_and_queries_one_million_simple_shapes -- --ignored
+
 validate:
     cargo run --locked --quiet --bin icstudio -- validate
 
