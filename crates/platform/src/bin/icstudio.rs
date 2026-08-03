@@ -36,9 +36,7 @@ fn run() -> Result<(), String> {
             let reported = reported_truth_score(&root)?;
             println!("ICStudio truth score: {computed:.2}/100");
             println!("reported score: {reported:.2}/100");
-            println!(
-                "assessment: M0 accepted; M1 project database foundation in development"
-            );
+            println!("assessment: M0 accepted; M1 project database foundation in development");
         }
         "capabilities" => {
             let output = take_option(&mut args, "--output").map(PathBuf::from);
@@ -131,8 +129,8 @@ fn run_project_command(root: &Path, mut args: Vec<String>) -> Result<(), String>
             let actor = actor(&mut args);
             require_empty(&args)?;
             let mut store = ProjectStore::open(&path)?;
-            let transaction = Transaction::new(expected_revision, request_id, actor)
-                .add_cell(library, name);
+            let transaction =
+                Transaction::new(expected_revision, request_id, actor).add_cell(library, name);
             store.commit(transaction)?;
             println!("{}", store.project().summary_json());
         }
@@ -190,10 +188,7 @@ fn require_empty(args: &[String]) -> Result<(), String> {
     if args.is_empty() {
         Ok(())
     } else {
-        Err(usage(&format!(
-            "unexpected arguments: {}",
-            args.join(" ")
-        )))
+        Err(usage(&format!("unexpected arguments: {}", args.join(" "))))
     }
 }
 

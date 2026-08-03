@@ -182,15 +182,12 @@ impl Transaction {
     }
 
     pub fn add_library(mut self, name: impl Into<String>) -> Self {
-        self.mutations.push(Mutation::AddLibrary { name: name.into() });
+        self.mutations
+            .push(Mutation::AddLibrary { name: name.into() });
         self
     }
 
-    pub fn add_cell(
-        mut self,
-        library: impl Into<String>,
-        name: impl Into<String>,
-    ) -> Self {
+    pub fn add_cell(mut self, library: impl Into<String>, name: impl Into<String>) -> Self {
         self.mutations.push(Mutation::AddCell {
             library: library.into(),
             name: name.into(),
@@ -453,9 +450,7 @@ pub fn deserialize_project(input: &str) -> Result<Project, String> {
                     views: BTreeMap::new(),
                 };
                 if library.cells.insert(cell_name.clone(), cell).is_some() {
-                    return Err(format!(
-                        "duplicate cell '{library_name}/{cell_name}'"
-                    ));
+                    return Err(format!("duplicate cell '{library_name}/{cell_name}'"));
                 }
             }
             Some("view") if fields.len() == 6 => {
@@ -470,9 +465,7 @@ pub fn deserialize_project(input: &str) -> Result<Project, String> {
                     .get_mut(&library_name)
                     .and_then(|library| library.cells.get_mut(&cell_name))
                     .ok_or_else(|| {
-                        format!(
-                            "view references missing cell '{library_name}/{cell_name}'"
-                        )
+                        format!("view references missing cell '{library_name}/{cell_name}'")
                     })?;
                 let view = View {
                     id: ObjectId::parse_hex(fields[1])?,
@@ -602,7 +595,10 @@ fn recover(root: &Path) -> Result<(), String> {
             }
             Some("tmp") => {
                 fs::remove_file(&path).map_err(|error| {
-                    format!("failed to remove incomplete journal {}: {error}", path.display())
+                    format!(
+                        "failed to remove incomplete journal {}: {error}",
+                        path.display()
+                    )
                 })?;
             }
             _ => {}
@@ -835,8 +831,7 @@ mod tests {
     fn ready_journal_recovers_after_injected_termination() {
         let root = temporary_root("recovery");
         let mut store = ProjectStore::create(&root, "recovery").expect("create project");
-        let transaction = Transaction::new(0, "request-recovery", "test")
-            .add_library("recovered");
+        let transaction = Transaction::new(0, "request-recovery", "test").add_library("recovered");
         let error = store
             .commit_with_failpoint(transaction, CommitFailpoint::AfterJournalReady)
             .expect_err("failpoint must interrupt commit");

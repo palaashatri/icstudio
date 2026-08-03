@@ -160,7 +160,10 @@ mod tests {
             payload: "line one\nline two\tvalue".to_string(),
         };
         let encoded = request.encode().expect("encode request");
-        assert_eq!(RequestEnvelope::decode(&encoded).expect("decode request"), request);
+        assert_eq!(
+            RequestEnvelope::decode(&encoded).expect("decode request"),
+            request
+        );
     }
 
     #[test]

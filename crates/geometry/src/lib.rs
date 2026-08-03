@@ -90,9 +90,9 @@ impl SpatialIndex {
     }
 
     pub fn query(&self, area: Rect) -> Vec<Shape> {
-        let upper = self.by_min_x.partition_point(|index| {
-            self.shapes[*index].bounds.min_x <= area.max_x
-        });
+        let upper = self
+            .by_min_x
+            .partition_point(|index| self.shapes[*index].bounds.min_x <= area.max_x);
         let mut matches: Vec<Shape> = self.by_min_x[..upper]
             .iter()
             .map(|index| self.shapes[*index])
@@ -185,7 +185,10 @@ mod tests {
         ];
         let index = SpatialIndex::build(shapes);
         let matches = index.query(Rect::new(8, 8, 25, 25).expect("query"));
-        assert_eq!(matches.iter().map(|shape| shape.id).collect::<Vec<_>>(), [2, 7, 9]);
+        assert_eq!(
+            matches.iter().map(|shape| shape.id).collect::<Vec<_>>(),
+            [2, 7, 9]
+        );
     }
 
     #[test]

@@ -40,9 +40,7 @@ fn main() {
             "initialize" => initialize_response(&id, &line),
             "ping" => success(&id, "{}"),
             "resources/list" => resources_list(&id, active_project.as_deref()),
-            "resources/read" => {
-                resources_read(&id, &line, &root, active_project.as_deref())
-            }
+            "resources/read" => resources_read(&id, &line, &root, active_project.as_deref()),
             "tools/list" => tools_list(&id),
             "tools/call" => tools_call(&id, &line, &root, active_project.as_deref()),
             "prompts/list" => prompts_list(&id),
@@ -96,12 +94,7 @@ fn resources_list(id: &str, active_project: Option<&Path>) -> String {
     )
 }
 
-fn resources_read(
-    id: &str,
-    request: &str,
-    root: &Path,
-    active_project: Option<&Path>,
-) -> String {
+fn resources_read(id: &str, request: &str, root: &Path, active_project: Option<&Path>) -> String {
     let uri = match extract_named_string(request, "uri") {
         Ok(value) => value,
         Err(error) => return error_response(id, -32602, &error),
@@ -136,11 +129,7 @@ fn project_resource(id: &str, uri: &str, active_project: Option<&Path>) -> Strin
     let path = match active_project {
         Some(value) => value,
         None => {
-            return error_response(
-                id,
-                -32003,
-                "ICSTUDIO_ACTIVE_PROJECT is not configured",
-            );
+            return error_response(id, -32003, "ICSTUDIO_ACTIVE_PROJECT is not configured");
         }
     };
     let store = match ProjectStore::open(path) {
@@ -169,10 +158,7 @@ fn project_resource(id: &str, uri: &str, active_project: Option<&Path>) -> Strin
             );
         }
     }
-    let canonical_uri = format!(
-        "icstudio://project/revision/{}",
-        store.project().revision
-    );
+    let canonical_uri = format!("icstudio://project/revision/{}", store.project().revision);
     text_resource(id, &canonical_uri, &store.project().summary_json())
 }
 
@@ -194,12 +180,7 @@ fn tools_list(id: &str) -> String {
     )
 }
 
-fn tools_call(
-    id: &str,
-    request: &str,
-    root: &Path,
-    active_project: Option<&Path>,
-) -> String {
+fn tools_call(id: &str, request: &str, root: &Path, active_project: Option<&Path>) -> String {
     let name = match extract_named_string(request, "name") {
         Ok(value) => value,
         Err(error) => return error_response(id, -32602, &error),
@@ -233,11 +214,7 @@ fn project_inspect_tool(id: &str, active_project: Option<&Path>) -> String {
     let path = match active_project {
         Some(value) => value,
         None => {
-            return error_response(
-                id,
-                -32003,
-                "ICSTUDIO_ACTIVE_PROJECT is not configured",
-            );
+            return error_response(id, -32003, "ICSTUDIO_ACTIVE_PROJECT is not configured");
         }
     };
     let store = match ProjectStore::open(path) {
