@@ -181,8 +181,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .project crates/platform
           git commit -m "project(m1): accept design kernel at 8 of 100"
-          just checkpoint CP-M1-KERNEL
-          just resume-check CP-M1-KERNEL
+          cargo run --locked --quiet --bin icstudio -- checkpoint --name CP-M1-KERNEL
+          cargo run --locked --quiet --bin icstudio -- resume-check --checkpoint CP-M1-KERNEL
           git add .project/checkpoints/CP-M1-KERNEL.json
           git commit -m "project(m1): checkpoint CP-M1-KERNEL"
           git push origin HEAD:milestone/m0-reproducible-factory
