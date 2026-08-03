@@ -1,0 +1,28 @@
+ICStudio native project metadata format, version 1
+
+Encoding: UTF-8 text with LF line endings.
+Ordering: project record, then libraries by name, cells by name, views by name.
+Fields: tab separated. Backslash, tab, LF, and CR are escaped as \\, \t, \n, and \r.
+Coordinates: not stored in this metadata slice; future geometry chunks use signed 64-bit DBU.
+Identity: every project, library, cell, and view record stores a stable 128-bit lowercase hexadecimal ID.
+Revision: unsigned 64-bit integer incremented once for each accepted transaction.
+
+Grammar:
+
+ICSTUDIO_PROJECT<TAB>1
+project<TAB>ID128<TAB>REVISION<TAB>PROJECT_NAME
+library<TAB>ID128<TAB>LIBRARY_NAME
+cell<TAB>ID128<TAB>LIBRARY_NAME<TAB>CELL_NAME
+view<TAB>ID128<TAB>LIBRARY_NAME<TAB>CELL_NAME<TAB>VIEW_NAME<TAB>VIEW_KIND
+
+Persistence protocol:
+
+1. Validate the transaction's expected revision and all mutations.
+2. Serialize the complete next snapshot deterministically.
+3. Write and fsync journal/revision-N.tmp.
+4. Rename it to journal/revision-N.ready.
+5. Write and fsync project.icst.tmp.
+6. Replace project.icst with the staged snapshot.
+7. Remove the ready journal record.
+
+Recovery ignores incomplete .tmp journals and replays only complete .ready snapshots whose revision is newer than the authoritative snapshot.
