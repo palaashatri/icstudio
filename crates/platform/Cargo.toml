@@ -6,10 +6,11 @@ license.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "ICStudio platform services, programme state, project commands, and MCP gateway"
+description = "ICStudio platform services, programme state, project commands, MCP gateway, and worker entry points"
 
 [dependencies]
 icstudio-project = { path = "../project" }
+icstudio-rpc = { path = "../rpc" }
 
 [lib]
 name = "icstudio_platform"
@@ -22,3 +23,7 @@ path = "src/bin/icstudio.rs"
 [[bin]]
 name = "icstudio-mcp"
 path = "src/bin/icstudio-mcp.rs"
+
+[[bin]]
+name = "icstudio-worker"
+path = "src/bin/icstudio-worker.rs"
