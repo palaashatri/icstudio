@@ -81,8 +81,8 @@ fn stdio_server_negotiates_and_lists_the_read_only_surface() {
     assert!(tools.contains("capability.report"));
     assert!(tools.contains("project.inspect"));
     assert!(prompts.contains("icstudio.project.review"));
-    assert!(report.contains("\"truthScore\":6.80"));
-    assert!(report.contains("project database foundation in development"));
+    assert!(report.contains("\"truthScore\":8.00"));
+    assert!(report.contains("M1 design kernel and desktop shell accepted"));
 
     let status = child.wait().expect("wait for MCP server");
     assert!(status.success());

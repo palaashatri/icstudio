@@ -5,7 +5,7 @@ capabilities:
   - CAP-RPC
   - CAP-MCP-READ
 milestone: M1
-status: active
+status: accepted
 priority: critical
 owner: chatgpt-gpt-5.6-thinking
 reviewer: independent-ci
@@ -65,6 +65,17 @@ limitations:
   - Electron packaging signing notarization and installers are deferred
   - UI is read-only and exposes no semantic design mutation
   - WebGPU availability depends on the host runtime and adapter
+evidence:
+  accepted_commit: 937f0f4940a3197b81b6553d127c6d8d4f0f537b
+  workflow_run: 30795833188
+  gates:
+    - ubuntu-latest factory gate: passed
+    - macos-latest factory gate: passed
+    - windows-latest factory gate: passed
+    - reproducible pinned non-root Linux image: passed
+    - one-million-shape Ubuntu release baseline: passed
+    - CLI UI MCP state and revision equivalence: passed
+    - locked npm licence and SPDX evidence: passed
 checkpoint:
-  last_green_commit: null
-  notes: Awaiting locked npm graph and strict cross-platform acceptance.
+  last_green_commit: 937f0f4940a3197b81b6553d127c6d8d4f0f537b
+  notes: M1 desktop shell, WebGPU scene, and authoritative surface-equivalence gate accepted.

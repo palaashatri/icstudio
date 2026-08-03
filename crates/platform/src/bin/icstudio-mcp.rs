@@ -209,7 +209,7 @@ fn capability_tool(id: &str, root: &Path) -> String {
     success(
         id,
         &format!(
-            "{{\"content\":[{{\"type\":\"text\",\"text\":\"{}\"}}],\"structuredContent\":{{\"truthScore\":{score:.2},\"maximumScore\":100,\"milestone\":\"M1\",\"claim\":\"project database foundation in development\"}},\"isError\":false}}",
+            "{{\"content\":[{{\"type\":\"text\",\"text\":\"{}\"}}],\"structuredContent\":{{\"truthScore\":{score:.2},\"maximumScore\":100,\"milestone\":\"M1\",\"claim\":\"M1 design kernel and desktop shell accepted\"}},\"isError\":false}}",
             escape_json(&report)
         ),
     )

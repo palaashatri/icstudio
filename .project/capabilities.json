@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "programme": "ICStudio 1.0",
-  "accepted_commit": "8f432b17b9ffbb2dfc1228a5063d6d347b10abb7",
+  "accepted_commit": "937f0f4940a3197b81b6553d127c6d8d4f0f537b",
   "capabilities": [
     {
       "id": "CAP-INFRA-BOOT",
@@ -14,7 +14,9 @@
         "rust-toolchain.toml",
         "justfile",
         ".github/workflows/ci.yml",
-        "GitHub Actions run 30774870611: Ubuntu, macOS, Windows, and Linux container passed"
+        "GitHub Actions run 30774870611: Ubuntu, macOS, Windows, and Linux container passed",
+        "apps/workbench/package-lock.json lockfile version 3",
+        "locked npm ci validation and workbench SPDX evidence in GitHub Actions run 30795833188"
       ],
       "limitations": []
     },
@@ -29,7 +31,11 @@
         "schemas/project-v1.txt",
         "create/save/reopen tests on Ubuntu macOS and Windows",
         "stable 128-bit identities",
-        "deterministic serialization round trip"
+        "deterministic serialization round trip",
+        "crates/platform/src/bin/icstudio-ui-bridge.rs",
+        "schemas/ui-snapshot-v1.txt",
+        "CLI UI and MCP state/revision equivalence test",
+        "GitHub Actions run 30795833188"
       ],
       "limitations": [
         "Metadata hierarchy only",
@@ -99,13 +105,16 @@
     {
       "id": "CAP-MCP-READ",
       "name": "Revisioned engineering resources",
-      "status": "candidate",
+      "status": "accepted",
       "tier": 0,
       "milestone": "M1",
       "evidence": [
         "icstudio://project/revision/{revision}",
         "project.inspect",
-        "CLI and MCP state/revision equivalence test"
+        "CLI and MCP state/revision equivalence test",
+        "crates/platform/tests/ui_surface_equivalence.rs",
+        "Electron renderer consumes the same immutable project summary",
+        "GitHub Actions run 30795833188 on Ubuntu macOS and Windows"
       ],
       "limitations": [
         "Hierarchy summary only",
