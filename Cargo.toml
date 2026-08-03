@@ -1,5 +1,14 @@
 [workspace]
-members = ["crates/geometry", "crates/platform", "crates/project", "crates/rpc"]
+members = [
+    "crates/formats",
+    "crates/geometry",
+    "crates/netlist",
+    "crates/pdk",
+    "crates/platform",
+    "crates/project",
+    "crates/results",
+    "crates/rpc",
+]
 resolver = "2"
 
 [workspace.package]
