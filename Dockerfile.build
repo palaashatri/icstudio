@@ -14,7 +14,7 @@ RUN just bootstrap \
     && just license-check \
     && just mcp-smoke \
     && just capability-report \
-    && just sbom \
+    && just rust-sbom \
     && useradd --create-home --uid 10001 icstudio \
     && chown -R icstudio:icstudio /workspace /usr/local/cargo
 
