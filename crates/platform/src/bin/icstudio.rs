@@ -14,7 +14,7 @@ fn main() {
 
 fn run() -> Result<(), String> {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
-    let root = take_option(&mut args, "--project-root")
+    let root = take_option(&mut args, "--project-root")?
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."));
     let command = args
@@ -39,7 +39,7 @@ fn run() -> Result<(), String> {
             println!("assessment: M0 accepted; M1 project database foundation in development");
         }
         "capabilities" => {
-            let output = take_option(&mut args, "--output").map(PathBuf::from);
+            let output = take_option(&mut args, "--output")?.map(PathBuf::from);
             require_empty(&args)?;
             let report = capability_report_markdown(&root)?;
             if let Some(path) = output {
@@ -49,14 +49,14 @@ fn run() -> Result<(), String> {
             }
         }
         "checkpoint" => {
-            let name = take_option(&mut args, "--name")
+            let name = take_option(&mut args, "--name")?
                 .ok_or_else(|| usage("checkpoint requires --name"))?;
             require_empty(&args)?;
             let path = create_checkpoint(&root, &name)?;
             println!("created checkpoint {}", path.display());
         }
         "resume-check" => {
-            let checkpoint = take_option(&mut args, "--checkpoint")
+            let checkpoint = take_option(&mut args, "--checkpoint")?
                 .ok_or_else(|| usage("resume-check requires --checkpoint"))?;
             require_empty(&args)?;
             resume_check(&root, &checkpoint)?;
@@ -68,7 +68,7 @@ fn run() -> Result<(), String> {
             println!("licence policy: MIT core, no external Rust dependencies");
         }
         "sbom" => {
-            let output = take_option(&mut args, "--output")
+            let output = take_option(&mut args, "--output")?
                 .ok_or_else(|| usage("sbom requires --output"))?;
             require_empty(&args)?;
             let destination = resolve_path(&root, Path::new(&output));
@@ -88,14 +88,14 @@ fn run_project_command(root: &Path, mut args: Vec<String>) -> Result<(), String>
         .cloned()
         .ok_or_else(|| usage("project requires a subcommand"))?;
     args.remove(0);
-    let path = take_option(&mut args, "--path")
+    let path = take_option(&mut args, "--path")?
         .map(PathBuf::from)
         .ok_or_else(|| usage("project command requires --path"))?;
     let path = resolve_path(root, &path);
 
     match command.as_str() {
         "create" => {
-            let name = take_option(&mut args, "--name")
+            let name = take_option(&mut args, "--name")?
                 .ok_or_else(|| usage("project create requires --name"))?;
             require_empty(&args)?;
             let store = ProjectStore::create(&path, name)?;
@@ -107,11 +107,11 @@ fn run_project_command(root: &Path, mut args: Vec<String>) -> Result<(), String>
             println!("{}", store.project().summary_json());
         }
         "add-library" => {
-            let name = take_option(&mut args, "--name")
+            let name = take_option(&mut args, "--name")?
                 .ok_or_else(|| usage("project add-library requires --name"))?;
             let expected_revision = required_revision(&mut args)?;
-            let request_id = request_id(&mut args, expected_revision);
-            let actor = actor(&mut args);
+            let request_id = request_id(&mut args, expected_revision)?;
+            let actor = actor(&mut args)?;
             require_empty(&args)?;
             let mut store = ProjectStore::open(&path)?;
             let transaction =
@@ -120,13 +120,13 @@ fn run_project_command(root: &Path, mut args: Vec<String>) -> Result<(), String>
             println!("{}", store.project().summary_json());
         }
         "add-cell" => {
-            let library = take_option(&mut args, "--library")
+            let library = take_option(&mut args, "--library")?
                 .ok_or_else(|| usage("project add-cell requires --library"))?;
-            let name = take_option(&mut args, "--name")
+            let name = take_option(&mut args, "--name")?
                 .ok_or_else(|| usage("project add-cell requires --name"))?;
             let expected_revision = required_revision(&mut args)?;
-            let request_id = request_id(&mut args, expected_revision);
-            let actor = actor(&mut args);
+            let request_id = request_id(&mut args, expected_revision)?;
+            let actor = actor(&mut args)?;
             require_empty(&args)?;
             let mut store = ProjectStore::open(&path)?;
             let transaction =
@@ -135,17 +135,17 @@ fn run_project_command(root: &Path, mut args: Vec<String>) -> Result<(), String>
             println!("{}", store.project().summary_json());
         }
         "add-view" => {
-            let library = take_option(&mut args, "--library")
+            let library = take_option(&mut args, "--library")?
                 .ok_or_else(|| usage("project add-view requires --library"))?;
-            let cell = take_option(&mut args, "--cell")
+            let cell = take_option(&mut args, "--cell")?
                 .ok_or_else(|| usage("project add-view requires --cell"))?;
-            let name = take_option(&mut args, "--name")
+            let name = take_option(&mut args, "--name")?
                 .ok_or_else(|| usage("project add-view requires --name"))?;
-            let kind = take_option(&mut args, "--kind")
+            let kind = take_option(&mut args, "--kind")?
                 .ok_or_else(|| usage("project add-view requires --kind"))?;
             let expected_revision = required_revision(&mut args)?;
-            let request_id = request_id(&mut args, expected_revision);
-            let actor = actor(&mut args);
+            let request_id = request_id(&mut args, expected_revision)?;
+            let actor = actor(&mut args)?;
             require_empty(&args)?;
             let mut store = ProjectStore::open(&path)?;
             let transaction = Transaction::new(expected_revision, request_id, actor)
@@ -159,29 +159,31 @@ fn run_project_command(root: &Path, mut args: Vec<String>) -> Result<(), String>
 }
 
 fn required_revision(args: &mut Vec<String>) -> Result<u64, String> {
-    let value = take_option(args, "--expected-revision")
+    let value = take_option(args, "--expected-revision")?
         .ok_or_else(|| usage("mutating project command requires --expected-revision"))?;
     value
         .parse::<u64>()
         .map_err(|error| usage(&format!("invalid expected revision '{value}': {error}")))
 }
 
-fn request_id(args: &mut Vec<String>, revision: u64) -> String {
-    take_option(args, "--request-id")
-        .unwrap_or_else(|| format!("cli-{}-{revision}", std::process::id()))
+fn request_id(args: &mut Vec<String>, revision: u64) -> Result<String, String> {
+    Ok(take_option(args, "--request-id")?
+        .unwrap_or_else(|| format!("cli-{}-{revision}", std::process::id())))
 }
 
-fn actor(args: &mut Vec<String>) -> String {
-    take_option(args, "--actor").unwrap_or_else(|| "cli".to_string())
+fn actor(args: &mut Vec<String>) -> Result<String, String> {
+    Ok(take_option(args, "--actor")?.unwrap_or_else(|| "cli".to_string()))
 }
 
-fn take_option(args: &mut Vec<String>, name: &str) -> Option<String> {
-    let index = args.iter().position(|argument| argument == name)?;
-    if index + 1 >= args.len() {
-        return None;
-    }
+fn take_option(args: &mut Vec<String>, name: &str) -> Result<Option<String>, String> {
+    let Some(index) = args.iter().position(|argument| argument == name) else {
+        return Ok(None);
+    };
     args.remove(index);
-    Some(args.remove(index))
+    if index >= args.len() || args[index].starts_with("--") {
+        return Err(usage(&format!("{name} requires a value")));
+    }
+    Ok(Some(args.remove(index)))
 }
 
 fn require_empty(args: &[String]) -> Result<(), String> {
