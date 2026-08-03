@@ -3,6 +3,9 @@ set dotenv-load := false
 bootstrap:
     cargo fetch --locked
 
+ui-bootstrap:
+    npm --prefix apps/workbench install --ignore-scripts --no-audit --no-fund
+
 format:
     cargo fmt --all
 
@@ -15,8 +18,16 @@ lint:
 build:
     cargo build --workspace --all-targets --locked
 
+ui-build: ui-bootstrap
+    npm --prefix apps/workbench run build
+
 test-fast:
     cargo test --workspace --all-targets --locked
+
+ui-test: ui-bootstrap
+    npm --prefix apps/workbench test
+
+ui-check: ui-build ui-test
 
 test-m1-geometry:
     cargo test --release --locked -p icstudio-geometry indexes_and_queries_one_million_simple_shapes -- --ignored
@@ -45,4 +56,4 @@ checkpoint name:
 resume-check name:
     cargo run --locked --quiet --bin icstudio -- resume-check --checkpoint {{name}}
 
-ci: format-check lint build test-fast validate license-check mcp-smoke
+ci: format-check lint build test-fast ui-check validate license-check mcp-smoke
