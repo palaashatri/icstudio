@@ -20,33 +20,16 @@ jobs:
           persist-credentials: true
 
       - name: Patch platform evidence logic
-        shell: python
+        shell: bash
         run: |
+          python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("crates/platform/src/lib.rs")
           text = path.read_text()
 
-          old_truth = '''    while let Some(weight_key) = input[cursor..].find("\\\"weight\\\"") {
-              let weight_key = cursor + weight_key;
-              let weight = parse_number_after(&input, weight_key + "\\\"weight\\\"".len())?;
-              let remaining = &input[weight_key..];
-              let completion_rel = remaining
-                  .find("\\\"completion\\\"")
-                  .ok_or_else(|| "truth milestone is missing completion".to_string())?;
-              let completion_key = weight_key + completion_rel;
-              let completion = parse_number_after(&input, completion_key + "\\\"completion\\\"".len())?;
-              if !(0.0..=1.0).contains(&completion) {
-                  return Err(format!(
-                      "milestone completion must be between 0 and 1, got {completion}"
-                  ));
-              }
-              score += weight * completion;
-              milestones += 1;
-              cursor = completion_key + "\\\"completion\\\"".len();
-          }
-          '''
-          new_truth = '''    while let Some(id_rel) = input[cursor..].find("\\\"id\\\"") {
+          truth_loop = '''    while let Some(id_rel) = input[cursor..].find("\\\"id\\\"") {
               let id_key = cursor + id_rel;
               let next_id = input[id_key + 1..]
                   .find("\\\"id\\\"")
@@ -73,107 +56,105 @@ jobs:
               cursor = next_id;
           }
           '''
-          if text.count(old_truth) != 1:
-              raise SystemExit("truth_score source did not match expected text")
-          text = text.replace(old_truth, new_truth)
-
-          old_checkpoint = '''    let destination = checkpoint_dir.join(format!("{name}.json"));
-              if destination.exists() {
-                  return Err(format!(
-                      "checkpoint already exists: {}",
-                      destination.display()
-                  ));
-              }
-
-              let capabilities = read_required(&root.join(CAPABILITIES_PATH))?;
-          '''
-          new_checkpoint = '''    let destination = checkpoint_dir.join(format!("{name}.json"));
-
-              let capabilities = read_required(&root.join(CAPABILITIES_PATH))?;
-          '''
-          if text.count(old_checkpoint) != 1:
-              raise SystemExit("checkpoint preamble did not match expected text")
-          text = text.replace(old_checkpoint, new_checkpoint)
-
-          old_write = '''    write_text(&destination, &manifest)?;
-              Ok(destination)
-          }
-          '''
-          new_write = '''    let mut file = fs::OpenOptions::new()
-                  .write(true)
-                  .create_new(true)
-                  .open(&destination)
-                  .map_err(|error| {
-                      if error.kind() == std::io::ErrorKind::AlreadyExists {
-                          format!("checkpoint already exists: {}", destination.display())
-                      } else {
-                          format!("failed to create {}: {error}", destination.display())
-                      }
-                  })?;
-              file.write_all(manifest.as_bytes())
-                  .map_err(|error| format!("failed to write {}: {error}", destination.display()))?;
-              file.sync_all()
-                  .map_err(|error| format!("failed to sync {}: {error}", destination.display()))?;
-              Ok(destination)
-          }
-          '''
-          if text.count(old_write) != 1:
-              raise SystemExit("checkpoint write did not match expected text")
-          text = text.replace(old_write, new_write)
-
-          text = text.replace(
-              'assert!((score - 2.0).abs() < f64::EPSILON);',
-              'assert!((score - 5.0).abs() < f64::EPSILON);',
+          text, count = re.subn(
+              r'    while let Some\(weight_key\).*?        cursor = completion_key \+ "\\\"completion\\\""\.len\(\);\n    \}\n',
+              truth_loop,
+              text,
+              count=1,
+              flags=re.S,
           )
+          if count != 1:
+              raise SystemExit("truth_score loop did not match")
+
+          text, count = re.subn(
+              r'    if destination\.exists\(\) \{.*?    \}\n\n    let capabilities =',
+              '    let capabilities =',
+              text,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit("checkpoint existence block did not match")
+
+          atomic_write = '''    let mut file = fs::OpenOptions::new()
+              .write(true)
+              .create_new(true)
+              .open(&destination)
+              .map_err(|error| {
+                  if error.kind() == std::io::ErrorKind::AlreadyExists {
+                      format!("checkpoint already exists: {}", destination.display())
+                  } else {
+                      format!("failed to create {}: {error}", destination.display())
+                  }
+              })?;
+          file.write_all(manifest.as_bytes())
+              .map_err(|error| format!("failed to write {}: {error}", destination.display()))?;
+          file.sync_all()
+              .map_err(|error| format!("failed to sync {}: {error}", destination.display()))?;
+          '''
+          text, count = re.subn(
+              r'    write_text\(&destination, &manifest\)\?;\n',
+              atomic_write,
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit("checkpoint write did not match")
+
+          old_score = 'assert!((score - 2.0).abs() < f64::EPSILON);'
+          if old_score not in text:
+              raise SystemExit("truth-score test did not match")
+          text = text.replace(old_score, 'assert!((score - 5.0).abs() < f64::EPSILON);', 1)
 
           marker = '''    #[test]
-              fn project_state_validates() {
+          fn project_state_validates() {
           '''
-          new_test = '''    #[test]
-              fn truth_score_binds_weight_and_completion_to_one_milestone() {
-                  let unique = format!(
-                      "icstudio-truth-test-{}-{}",
-                      std::process::id(),
-                      SystemTime::now()
-                          .duration_since(UNIX_EPOCH)
-                          .expect("time")
-                          .as_nanos()
-                  );
-                  let root = std::env::temp_dir().join(unique);
-                  fs::create_dir_all(root.join(".project")).expect("project directory");
-                  fs::write(
-                      root.join(TRUTH_PATH),
-                      "{\\\"milestones\\\":[{\\\"id\\\":\\\"M0\\\",\\\"completion\\\":1,\\\"weight\\\":2},{\\\"id\\\":\\\"M1\\\",\\\"weight\\\":6,\\\"completion\\\":0.5}],\\\"reported_score\\\":5}",
-                  )
-                  .expect("truth fixture");
-                  assert!((truth_score(&root).expect("truth score") - 5.0).abs() < f64::EPSILON);
-                  fs::remove_dir_all(root).expect("cleanup");
-              }
+          regression = '''    #[test]
+          fn truth_score_binds_weight_and_completion_to_one_milestone() {
+              let unique = format!(
+                  "icstudio-truth-test-{}-{}",
+                  std::process::id(),
+                  SystemTime::now()
+                      .duration_since(UNIX_EPOCH)
+                      .expect("time")
+                      .as_nanos()
+              );
+              let root = std::env::temp_dir().join(unique);
+              fs::create_dir_all(root.join(".project")).expect("project directory");
+              fs::write(
+                  root.join(TRUTH_PATH),
+                  "{\\\"milestones\\\":[{\\\"id\\\":\\\"M0\\\",\\\"completion\\\":1,\\\"weight\\\":2},{\\\"id\\\":\\\"M1\\\",\\\"weight\\\":6,\\\"completion\\\":0.5}],\\\"reported_score\\\":5}",
+              )
+              .expect("truth fixture");
+              assert!((truth_score(&root).expect("truth score") - 5.0).abs() < f64::EPSILON);
+              fs::remove_dir_all(root).expect("cleanup");
+          }
 
-              #[test]
-              fn project_state_validates() {
+          #[test]
+          fn project_state_validates() {
           '''
           if text.count(marker) != 1:
               raise SystemExit("test insertion marker did not match")
-          text = text.replace(marker, new_test)
+          text = text.replace(marker, regression, 1)
 
           checkpoint_marker = '''        create_checkpoint(&root, "CP-TEST").expect("checkpoint creation");
-                  resume_check(&root, "CP-TEST").expect("checkpoint should match");
+              resume_check(&root, "CP-TEST").expect("checkpoint should match");
           '''
-          checkpoint_test = '''        let checkpoint = create_checkpoint(&root, "CP-TEST").expect("checkpoint creation");
-                  let immutable_contents = fs::read_to_string(&checkpoint).expect("checkpoint contents");
-                  assert!(create_checkpoint(&root, "CP-TEST").is_err());
-                  assert_eq!(
-                      fs::read_to_string(&checkpoint).expect("checkpoint contents"),
-                      immutable_contents
-                  );
-                  resume_check(&root, "CP-TEST").expect("checkpoint should match");
+          checkpoint_regression = '''        let checkpoint = create_checkpoint(&root, "CP-TEST").expect("checkpoint creation");
+              let immutable_contents = fs::read_to_string(&checkpoint).expect("checkpoint contents");
+              assert!(create_checkpoint(&root, "CP-TEST").is_err());
+              assert_eq!(
+                  fs::read_to_string(&checkpoint).expect("checkpoint contents"),
+                  immutable_contents
+              );
+              resume_check(&root, "CP-TEST").expect("checkpoint should match");
           '''
           if text.count(checkpoint_marker) != 1:
-              raise SystemExit("checkpoint test marker did not match")
-          text = text.replace(checkpoint_marker, checkpoint_test)
+              raise SystemExit("checkpoint regression marker did not match")
+          text = text.replace(checkpoint_marker, checkpoint_regression, 1)
 
           path.write_text(text)
+          PY
 
       - name: Format and validate patch
         shell: bash
