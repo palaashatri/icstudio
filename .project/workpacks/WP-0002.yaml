@@ -7,7 +7,7 @@ capabilities:
   - CAP-MCP-READ
   - CAP-GEO-KERNEL
 milestone: M1
-status: review
+status: accepted
 priority: critical
 owner: chatgpt-gpt-5.6-thinking
 reviewer: independent-ci
@@ -74,6 +74,15 @@ limitations:
   - spatial index is a reference implementation, not a production R-tree
   - MCP project surface is read-only
   - worker protocol currently has only health and crash-test commands
+evidence:
+  accepted_commit: c63c0b87c958bb11ce9c49a2b18851fd0075f96a
+  workflow_run: 30774870611
+  gates:
+    - ubuntu-latest cross-platform gate: passed
+    - macos-latest cross-platform gate: passed
+    - windows-latest cross-platform gate: passed
+    - reproducible Linux image: passed
+    - one-million-shape Ubuntu release baseline: passed
 checkpoint:
-  last_green_commit: null
-  notes: Awaiting cross-platform CI and baseline evidence.
+  last_green_commit: c63c0b87c958bb11ce9c49a2b18851fd0075f96a
+  notes: This work package is accepted as a partial M1 foundation. M1 remains in progress until its remaining mandatory tracks and gates are implemented.
