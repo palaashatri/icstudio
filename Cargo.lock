@@ -3,7 +3,19 @@
 version = 4
 
 [[package]]
+name = "icstudio-formats"
+version = "0.1.0"
+
+[[package]]
 name = "icstudio-geometry"
+version = "0.1.0"
+
+[[package]]
+name = "icstudio-netlist"
+version = "0.1.0"
+
+[[package]]
+name = "icstudio-pdk"
 version = "0.1.0"
 
 [[package]]
@@ -16,6 +28,10 @@ dependencies = [
 
 [[package]]
 name = "icstudio-project"
+version = "0.1.0"
+
+[[package]]
+name = "icstudio-results"
 version = "0.1.0"
 
 [[package]]
