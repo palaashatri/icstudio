@@ -1,4 +1,4 @@
-FROM rust:1.85.1-bookworm
+FROM rust:1.85.1-bookworm@sha256:e51d0265072d2d9d5d320f6a44dde6b9ef13653b035098febd68cce8fa7c0bc4
 
 RUN cargo install just --locked --version 1.40.0
 
@@ -14,7 +14,11 @@ RUN just bootstrap \
     && just license-check \
     && just mcp-smoke \
     && just capability-report \
-    && just sbom
+    && just sbom \
+    && useradd --create-home --uid 10001 icstudio \
+    && chown -R icstudio:icstudio /workspace /usr/local/cargo
+
+USER icstudio
 
 ENTRYPOINT ["cargo", "run", "--locked", "--quiet", "--bin", "icstudio", "--"]
 CMD ["truth"]
