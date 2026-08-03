@@ -4,7 +4,7 @@ bootstrap:
     cargo fetch --locked
 
 ui-bootstrap:
-    npm install --prefix=apps/workbench --ignore-scripts --no-audit --no-fund
+    node apps/workbench/scripts/run-npm.mjs install --ignore-scripts --no-audit --no-fund
 
 format:
     cargo fmt --all
@@ -19,16 +19,16 @@ build:
     cargo build --workspace --all-targets --locked
 
 ui-build: ui-bootstrap
-    npm run --prefix=apps/workbench build
+    node apps/workbench/scripts/run-npm.mjs run build
 
 test-fast:
     cargo test --workspace --all-targets --locked
 
 ui-test: ui-bootstrap
-    npm test --prefix=apps/workbench
+    node apps/workbench/scripts/run-npm.mjs test
 
 ui-license-check: ui-bootstrap
-    npm run --prefix=apps/workbench license-check
+    node apps/workbench/scripts/run-npm.mjs run license-check
 
 ui-check: ui-build ui-test ui-license-check
 
@@ -48,7 +48,7 @@ rust-sbom:
     cargo run --locked --quiet --bin icstudio -- sbom --output artifacts/icstudio.spdx.json
 
 ui-sbom: ui-bootstrap
-    npm run --prefix=apps/workbench sbom
+    node apps/workbench/scripts/run-npm.mjs run sbom
 
 sbom: rust-sbom ui-sbom
 
