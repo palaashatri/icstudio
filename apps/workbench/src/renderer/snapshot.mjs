@@ -12,9 +12,13 @@
 
 const objectIdPattern = /^[0-9a-f]{32}$/;
 
-/** @param {unknown} value @param {string} field */
+/**
+ * @param {unknown} value
+ * @param {string} field
+ * @returns {number}
+ */
 function nonNegativeInteger(value, field) {
-  if (!Number.isSafeInteger(value) || value < 0) {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
     throw new Error(`${field} must be a non-negative safe integer`);
   }
   return value;
