@@ -8,7 +8,7 @@
     "strict": true,
     "noEmitOnError": true,
     "skipLibCheck": true,
-    "types": ["node", "electron"]
+    "types": ["node"]
   },
   "include": ["src/main/**/*.ts"]
 }
