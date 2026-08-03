@@ -27,7 +27,10 @@ test-fast:
 ui-test: ui-bootstrap
     npm --prefix apps/workbench test
 
-ui-check: ui-build ui-test
+ui-license-check: ui-bootstrap
+    npm --prefix apps/workbench run license-check
+
+ui-check: ui-build ui-test ui-license-check
 
 test-m1-geometry:
     cargo test --release --locked -p icstudio-geometry indexes_and_queries_one_million_simple_shapes -- --ignored
@@ -41,8 +44,13 @@ truth:
 capability-report:
     cargo run --locked --quiet --bin icstudio -- capabilities --output artifacts/capability-report.md
 
-sbom:
+rust-sbom:
     cargo run --locked --quiet --bin icstudio -- sbom --output artifacts/icstudio.spdx.json
+
+ui-sbom: ui-bootstrap
+    npm --prefix apps/workbench run sbom
+
+sbom: rust-sbom ui-sbom
 
 license-check:
     cargo run --locked --quiet --bin icstudio -- license-check
