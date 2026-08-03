@@ -30,9 +30,13 @@ const REQUIRED_CAPABILITIES: &[&str] = &[
 ];
 
 const WORKSPACE_CRATES: &[(&str, &str)] = &[
+    ("icstudio-formats", "crates/formats/Cargo.toml"),
     ("icstudio-geometry", "crates/geometry/Cargo.toml"),
+    ("icstudio-netlist", "crates/netlist/Cargo.toml"),
+    ("icstudio-pdk", "crates/pdk/Cargo.toml"),
     ("icstudio-platform", "crates/platform/Cargo.toml"),
     ("icstudio-project", "crates/project/Cargo.toml"),
+    ("icstudio-results", "crates/results/Cargo.toml"),
     ("icstudio-rpc", "crates/rpc/Cargo.toml"),
 ];
 

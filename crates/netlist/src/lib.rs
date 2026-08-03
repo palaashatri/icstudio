@@ -129,8 +129,14 @@ pub fn parse_spice(input: &str) -> Result<Netlist, String> {
             }
             let name = tokens[1].to_string();
             validate_name("circuit", &name)?;
-            let ports = tokens[2..].iter().map(|token| (*token).to_string()).collect();
-            let nets = tokens[2..].iter().map(|token| (*token).to_string()).collect();
+            let ports = tokens[2..]
+                .iter()
+                .map(|token| (*token).to_string())
+                .collect();
+            let nets = tokens[2..]
+                .iter()
+                .map(|token| (*token).to_string())
+                .collect();
             if top.is_none() {
                 top = Some(name.clone());
             }
@@ -191,7 +197,10 @@ pub fn parse_spice(input: &str) -> Result<Netlist, String> {
     }
 
     if let Some(circuit) = active {
-        return Err(format!("unterminated .subckt '{}': missing .ends", circuit.name));
+        return Err(format!(
+            "unterminated .subckt '{}': missing .ends",
+            circuit.name
+        ));
     }
     let top = top.ok_or_else(|| "SPICE input contains no .subckt".to_string())?;
     let netlist = Netlist {
@@ -218,7 +227,9 @@ fn parse_instance(tokens: &[&str], line_number: usize) -> Result<Instance, Strin
         'M' => (DeviceKind::Mosfet, 4, 5),
         'X' => {
             if tokens.len() < 4 {
-                return Err(format!("subcircuit instance is incomplete at line {line_number}"));
+                return Err(format!(
+                    "subcircuit instance is incomplete at line {line_number}"
+                ));
             }
             (DeviceKind::Subcircuit, tokens.len() - 2, tokens.len() - 1)
         }
@@ -229,7 +240,9 @@ fn parse_instance(tokens: &[&str], line_number: usize) -> Result<Instance, Strin
         }
     };
     if tokens.len() <= model_index || tokens.len() < terminal_count + 2 {
-        return Err(format!("instance '{name}' is incomplete at line {line_number}"));
+        return Err(format!(
+            "instance '{name}' is incomplete at line {line_number}"
+        ));
     }
     let terminals = tokens[1..=terminal_count]
         .iter()
@@ -238,9 +251,9 @@ fn parse_instance(tokens: &[&str], line_number: usize) -> Result<Instance, Strin
     let model_or_value = tokens[model_index].to_string();
     let mut parameters = BTreeMap::new();
     for token in &tokens[model_index + 1..] {
-        let (parameter, value) = token.split_once('=').ok_or_else(|| {
-            format!("invalid instance parameter '{token}' at line {line_number}")
-        })?;
+        let (parameter, value) = token
+            .split_once('=')
+            .ok_or_else(|| format!("invalid instance parameter '{token}' at line {line_number}"))?;
         validate_name("parameter", parameter)?;
         parameters.insert(parameter.to_string(), value.to_string());
     }

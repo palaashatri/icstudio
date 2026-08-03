@@ -59,8 +59,7 @@ impl Technology {
             ));
         }
         if self.layers.values().any(|existing| {
-            existing.gds_layer == layer.gds_layer
-                && existing.gds_datatype == layer.gds_datatype
+            existing.gds_layer == layer.gds_layer && existing.gds_datatype == layer.gds_datatype
         }) {
             return Err(format!(
                 "GDS mapping {}/{} is already assigned",
@@ -181,10 +180,18 @@ pub fn deserialize(input: &str) -> Result<Technology, String> {
                     name: unescape_field(fields[1])?,
                     purpose: unescape_field(fields[2])?,
                     gds_layer: fields[3].parse::<u16>().map_err(|error| {
-                        format!("invalid GDS layer '{}' at line {}: {error}", fields[3], line_index + 3)
+                        format!(
+                            "invalid GDS layer '{}' at line {}: {error}",
+                            fields[3],
+                            line_index + 3
+                        )
                     })?,
                     gds_datatype: fields[4].parse::<u16>().map_err(|error| {
-                        format!("invalid GDS datatype '{}' at line {}: {error}", fields[4], line_index + 3)
+                        format!(
+                            "invalid GDS datatype '{}' at line {}: {error}",
+                            fields[4],
+                            line_index + 3
+                        )
                     })?,
                 })?;
             }
@@ -327,12 +334,14 @@ mod tests {
     #[test]
     fn unsafe_model_paths_are_rejected() {
         let mut technology = Technology::new("demo", 1000).expect("technology");
-        assert!(technology
-            .add_model(ModelReference {
-                name: "bad".to_string(),
-                kind: "spice".to_string(),
-                relative_path: "../secret".to_string(),
-            })
-            .is_err());
+        assert!(
+            technology
+                .add_model(ModelReference {
+                    name: "bad".to_string(),
+                    kind: "spice".to_string(),
+                    relative_path: "../secret".to_string(),
+                })
+                .is_err()
+        );
     }
 }

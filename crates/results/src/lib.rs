@@ -64,7 +64,10 @@ impl ResultSet {
                 return Err(format!("signal '{}' axis is not monotonic", signal.name));
             }
             if signal.axis.len() > 10_000_000 {
-                return Err(format!("signal '{}' exceeds the M1 sample limit", signal.name));
+                return Err(format!(
+                    "signal '{}' exceeds the M1 sample limit",
+                    signal.name
+                ));
             }
         }
         Ok(())
@@ -72,7 +75,11 @@ impl ResultSet {
 
     pub fn summary_json(&self) -> Result<String, String> {
         self.validate()?;
-        let samples: usize = self.signals.values().map(|signal| signal.values.len()).sum();
+        let samples: usize = self
+            .signals
+            .values()
+            .map(|signal| signal.values.len())
+            .sum();
         Ok(format!(
             "{{\"runId\":\"{}\",\"projectId\":\"{}\",\"projectRevision\":{},\"analysis\":\"{}\",\"solver\":\"{}\",\"signalCount\":{},\"sampleCount\":{}}}",
             escape_json(&self.manifest.run_id),
@@ -331,7 +338,12 @@ mod tests {
     #[test]
     fn mismatched_or_non_monotonic_vectors_are_rejected() {
         let mut results = fixture();
-        results.signals.get_mut("v(out)").expect("signal").values.pop();
+        results
+            .signals
+            .get_mut("v(out)")
+            .expect("signal")
+            .values
+            .pop();
         assert!(results.validate().is_err());
         let mut results = fixture();
         results.signals.get_mut("v(out)").expect("signal").axis = vec![0.0, 2.0, 1.0];

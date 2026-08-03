@@ -36,9 +36,9 @@ pub fn parse_gds_records(input: &[u8]) -> Result<Vec<GdsRecord<'_>>, String> {
         let end = offset
             .checked_add(length)
             .ok_or_else(|| format!("GDSII record length overflow at byte {offset}"))?;
-        let record = input
-            .get(offset..end)
-            .ok_or_else(|| format!("truncated GDSII record at byte {offset}: needs {length} bytes"))?;
+        let record = input.get(offset..end).ok_or_else(|| {
+            format!("truncated GDSII record at byte {offset}: needs {length} bytes")
+        })?;
         records.push(GdsRecord {
             offset,
             record_type: record[2],
@@ -88,11 +88,11 @@ mod tests {
 
     #[test]
     fn rejects_short_odd_and_truncated_records_with_offsets() {
-        let error = parse_gds_records(&[0x00, 0x02, 0x00, 0x00])
-            .expect_err("short record must fail");
+        let error =
+            parse_gds_records(&[0x00, 0x02, 0x00, 0x00]).expect_err("short record must fail");
         assert!(error.contains("byte 0"));
-        let error = parse_gds_records(&[0x00, 0x05, 0x00, 0x00, 0x00])
-            .expect_err("odd record must fail");
+        let error =
+            parse_gds_records(&[0x00, 0x05, 0x00, 0x00, 0x00]).expect_err("odd record must fail");
         assert!(error.contains("odd"));
         let error = parse_gds_records(&[0x00, 0x08, 0x00, 0x00, 0x00, 0x00])
             .expect_err("truncated record must fail");
