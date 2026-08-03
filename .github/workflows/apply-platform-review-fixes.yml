@@ -1,0 +1,196 @@
+name: One-time platform review fixes
+
+on:
+  push:
+    branches:
+      - milestone/m0-reproducible-factory
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: milestone/m0-reproducible-factory
+          persist-credentials: true
+
+      - name: Patch platform evidence logic
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path("crates/platform/src/lib.rs")
+          text = path.read_text()
+
+          old_truth = '''    while let Some(weight_key) = input[cursor..].find("\\\"weight\\\"") {
+              let weight_key = cursor + weight_key;
+              let weight = parse_number_after(&input, weight_key + "\\\"weight\\\"".len())?;
+              let remaining = &input[weight_key..];
+              let completion_rel = remaining
+                  .find("\\\"completion\\\"")
+                  .ok_or_else(|| "truth milestone is missing completion".to_string())?;
+              let completion_key = weight_key + completion_rel;
+              let completion = parse_number_after(&input, completion_key + "\\\"completion\\\"".len())?;
+              if !(0.0..=1.0).contains(&completion) {
+                  return Err(format!(
+                      "milestone completion must be between 0 and 1, got {completion}"
+                  ));
+              }
+              score += weight * completion;
+              milestones += 1;
+              cursor = completion_key + "\\\"completion\\\"".len();
+          }
+          '''
+          new_truth = '''    while let Some(id_rel) = input[cursor..].find("\\\"id\\\"") {
+              let id_key = cursor + id_rel;
+              let next_id = input[id_key + 1..]
+                  .find("\\\"id\\\"")
+                  .map(|value| id_key + 1 + value)
+                  .unwrap_or(input.len());
+              let object = &input[id_key..next_id];
+              let weight = object
+                  .find("\\\"weight\\\"")
+                  .ok_or_else(|| "truth milestone is missing weight".to_string())
+                  .and_then(|index| parse_number_after(object, index + "\\\"weight\\\"".len()))?;
+              let completion = object
+                  .find("\\\"completion\\\"")
+                  .ok_or_else(|| "truth milestone is missing completion".to_string())
+                  .and_then(|index| {
+                      parse_number_after(object, index + "\\\"completion\\\"".len())
+                  })?;
+              if !(0.0..=1.0).contains(&completion) {
+                  return Err(format!(
+                      "milestone completion must be between 0 and 1, got {completion}"
+                  ));
+              }
+              score += weight * completion;
+              milestones += 1;
+              cursor = next_id;
+          }
+          '''
+          if text.count(old_truth) != 1:
+              raise SystemExit("truth_score source did not match expected text")
+          text = text.replace(old_truth, new_truth)
+
+          old_checkpoint = '''    let destination = checkpoint_dir.join(format!("{name}.json"));
+              if destination.exists() {
+                  return Err(format!(
+                      "checkpoint already exists: {}",
+                      destination.display()
+                  ));
+              }
+
+              let capabilities = read_required(&root.join(CAPABILITIES_PATH))?;
+          '''
+          new_checkpoint = '''    let destination = checkpoint_dir.join(format!("{name}.json"));
+
+              let capabilities = read_required(&root.join(CAPABILITIES_PATH))?;
+          '''
+          if text.count(old_checkpoint) != 1:
+              raise SystemExit("checkpoint preamble did not match expected text")
+          text = text.replace(old_checkpoint, new_checkpoint)
+
+          old_write = '''    write_text(&destination, &manifest)?;
+              Ok(destination)
+          }
+          '''
+          new_write = '''    let mut file = fs::OpenOptions::new()
+                  .write(true)
+                  .create_new(true)
+                  .open(&destination)
+                  .map_err(|error| {
+                      if error.kind() == std::io::ErrorKind::AlreadyExists {
+                          format!("checkpoint already exists: {}", destination.display())
+                      } else {
+                          format!("failed to create {}: {error}", destination.display())
+                      }
+                  })?;
+              file.write_all(manifest.as_bytes())
+                  .map_err(|error| format!("failed to write {}: {error}", destination.display()))?;
+              file.sync_all()
+                  .map_err(|error| format!("failed to sync {}: {error}", destination.display()))?;
+              Ok(destination)
+          }
+          '''
+          if text.count(old_write) != 1:
+              raise SystemExit("checkpoint write did not match expected text")
+          text = text.replace(old_write, new_write)
+
+          text = text.replace(
+              'assert!((score - 2.0).abs() < f64::EPSILON);',
+              'assert!((score - 5.0).abs() < f64::EPSILON);',
+          )
+
+          marker = '''    #[test]
+              fn project_state_validates() {
+          '''
+          new_test = '''    #[test]
+              fn truth_score_binds_weight_and_completion_to_one_milestone() {
+                  let unique = format!(
+                      "icstudio-truth-test-{}-{}",
+                      std::process::id(),
+                      SystemTime::now()
+                          .duration_since(UNIX_EPOCH)
+                          .expect("time")
+                          .as_nanos()
+                  );
+                  let root = std::env::temp_dir().join(unique);
+                  fs::create_dir_all(root.join(".project")).expect("project directory");
+                  fs::write(
+                      root.join(TRUTH_PATH),
+                      "{\\\"milestones\\\":[{\\\"id\\\":\\\"M0\\\",\\\"completion\\\":1,\\\"weight\\\":2},{\\\"id\\\":\\\"M1\\\",\\\"weight\\\":6,\\\"completion\\\":0.5}],\\\"reported_score\\\":5}",
+                  )
+                  .expect("truth fixture");
+                  assert!((truth_score(&root).expect("truth score") - 5.0).abs() < f64::EPSILON);
+                  fs::remove_dir_all(root).expect("cleanup");
+              }
+
+              #[test]
+              fn project_state_validates() {
+          '''
+          if text.count(marker) != 1:
+              raise SystemExit("test insertion marker did not match")
+          text = text.replace(marker, new_test)
+
+          checkpoint_marker = '''        create_checkpoint(&root, "CP-TEST").expect("checkpoint creation");
+                  resume_check(&root, "CP-TEST").expect("checkpoint should match");
+          '''
+          checkpoint_test = '''        let checkpoint = create_checkpoint(&root, "CP-TEST").expect("checkpoint creation");
+                  let immutable_contents = fs::read_to_string(&checkpoint).expect("checkpoint contents");
+                  assert!(create_checkpoint(&root, "CP-TEST").is_err());
+                  assert_eq!(
+                      fs::read_to_string(&checkpoint).expect("checkpoint contents"),
+                      immutable_contents
+                  );
+                  resume_check(&root, "CP-TEST").expect("checkpoint should match");
+          '''
+          if text.count(checkpoint_marker) != 1:
+              raise SystemExit("checkpoint test marker did not match")
+          text = text.replace(checkpoint_marker, checkpoint_test)
+
+          path.write_text(text)
+
+      - name: Format and validate patch
+        shell: bash
+        run: |
+          rustup toolchain install 1.85.1 --profile minimal --component rustfmt
+          rustup override set 1.85.1
+          cargo fmt --all
+          cargo test --locked -p icstudio-platform --lib
+
+      - name: Commit review fixes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add crates/platform/src/lib.rs
+          git commit -m "fix(platform): harden truth and checkpoint evidence integrity"
+          git push origin HEAD:milestone/m0-reproducible-factory
