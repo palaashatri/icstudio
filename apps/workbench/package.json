@@ -8,6 +8,8 @@
     "clean": "node scripts/clean.mjs",
     "build": "npm run clean && tsc -p tsconfig.main.json && vite build",
     "test": "node --test tests/*.test.mjs",
+    "license-check": "node scripts/dependency-evidence.mjs --check-only",
+    "sbom": "node scripts/dependency-evidence.mjs",
     "start": "npm run build && electron ."
   },
   "dependencies": {
