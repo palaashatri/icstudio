@@ -6,7 +6,7 @@ The authoritative product, solver, architecture, validation, and milestone contr
 
 ## Current implementation state
 
-**Truth score: 6.8/100.** M0 is accepted and M1 is approximately 80% complete.
+**Truth score: 8/100. M0 and M1 are accepted. M2 has not started.**
 
 The implementation branch currently contains:
 
@@ -23,21 +23,25 @@ The implementation branch currently contains:
 - a structural netlist IR and bounded SPICE parser scaffold with source-line diagnostics;
 - a deterministic result manifest and scalar signal-vector store using exact IEEE-754 bit patterns;
 - a bounded GDSII record-framing parser with length, parity, offset, and truncation validation;
-- eight dependency-free Rust crates covered by MIT inheritance checks and the generated SPDX SBOM;
+- an Electron and React desktop shell with an operational WebGPU scene prototype;
+- a least-privilege Rust UI bridge that exposes the same immutable project summary used by CLI and MCP;
+- an automated test proving CLI, UI, and MCP expose identical project state and revision;
+- a locked npm dependency graph, permissive-licence enforcement, and separate Rust and workbench SPDX 2.3 evidence;
 - strict tests and build targets for Linux, macOS, Apple Silicon macOS, Intel macOS, and Windows.
 
-M1 is not complete. The desktop shell, WebGPU scene prototype, and UI consumer proving CLI/UI/MCP state equivalence remain unimplemented. Production hierarchical geometry, undo/redo, writer coordination, PCell/rule-deck execution, full GDSII/SPICE interoperability, and result streaming also remain future work.
+The accepted restart point is `CP-M1-KERNEL`.
 
-ICStudio still has no schematic editor, layout editor, circuit simulator, DRC, LVS, extraction, EM, thermal, reliability, photonics, optimization, or qualified tapeout flow.
+M1 does **not** include a schematic editor, layout editor, circuit simulator, DRC, LVS, extraction, EM, thermal, reliability, photonics, optimization, or qualified tapeout flow. The workbench is currently a read-only project-state and WebGPU scene prototype. Production hierarchical geometry, undo/redo, concurrent-writer coordination, PCell and rule-deck execution, complete GDSII/SPICE interoperability, result streaming, application packaging, signing, notarization, and installers remain future work.
 
 ## Developer commands
 
-Install Rust 1.85.1 and [`just`](https://github.com/casey/just), then run:
+Install Rust 1.85.1, Node.js 22 with npm, and [`just`](https://github.com/casey/just), then run:
 
 ```bash
 just bootstrap
 just build
 just test-fast
+just ui-check
 just validate
 just truth
 just mcp-smoke
@@ -49,22 +53,22 @@ Run the explicit M1 geometry baseline:
 just test-m1-geometry
 ```
 
-Generate programme evidence:
+Generate programme and supply-chain evidence:
 
 ```bash
 just capability-report
 just sbom
 just license-check
+just ui-license-check
 ```
 
-Create and verify a pause-safe checkpoint:
+Verify the accepted restart point:
 
 ```bash
-just checkpoint CP-M1-KERNEL-WIP
-just resume-check CP-M1-KERNEL-WIP
+just resume-check CP-M1-KERNEL
 ```
 
-## Headless project workflow
+## Project workflow
 
 Create a project and inspect revision zero:
 
@@ -89,6 +93,27 @@ cargo run --locked --bin icstudio -- project add-view \
 
 Every mutating command validates the caller's expected revision. Stale edits fail rather than silently overwriting newer project state.
 
+## Desktop workbench
+
+Build the Rust bridge and the locked Electron/React workbench:
+
+```bash
+cargo build --locked --bin icstudio-ui-bridge
+just ui-build
+```
+
+Launch it against an active project on Linux or macOS:
+
+```bash
+ICSTUDIO_ACTIVE_PROJECT=demo.icstudio \
+ICSTUDIO_UI_BRIDGE=target/debug/icstudio-ui-bridge \
+node apps/workbench/scripts/run-npm.mjs start
+```
+
+On Windows, set the same two environment variables and point `ICSTUDIO_UI_BRIDGE` to `target\debug\icstudio-ui-bridge.exe` before running the Node command.
+
+The Electron renderer is sandboxed, uses context isolation, has Node integration disabled, and receives only one immutable project-snapshot IPC method. It does not parse project files or own engineering state.
+
 ## MCP server
 
 Run against an active project:
@@ -107,12 +132,13 @@ The server negotiates MCP revision `2025-11-25` over stdio and exposes:
 
 The MCP project surface remains read-only. Transactional semantic design patches arrive in a later milestone.
 
-## M1 schema foundations
+## M1 contracts
 
 - `schemas/project-v1.txt`
 - `schemas/rpc-v1.txt`
 - `schemas/pdk-v1.txt`
 - `schemas/results-v1.txt`
+- `schemas/ui-snapshot-v1.txt`
 
 The SPICE and GDSII implementations are deliberately bounded parser scaffolds. They do not claim simulation semantics or full import/export fidelity.
 
@@ -122,9 +148,10 @@ Release-target workflows build:
 
 - `icstudio`
 - `icstudio-mcp`
+- `icstudio-ui-bridge`
 - `icstudio-worker`
 
-Targets are Linux x86-64, Windows x86-64, Apple Silicon macOS, and Intel macOS. Signing, notarization, installers, and the graphical workbench are not implemented.
+Targets are Linux x86-64, Windows x86-64, Apple Silicon macOS, and Intel macOS. Electron application packaging, signing, notarization, and installers are not implemented.
 
 ## Licence
 
