@@ -125,7 +125,12 @@ fn validate_id(raw: &str) -> Result<String, String> {
         }
         return Ok(raw.to_string());
     }
-    if raw == "null" || raw.contains(['.', 'e', 'E']) || raw.parse::<i64>().is_err() {
+    if raw == "null"
+        || raw
+            .chars()
+            .any(|character| matches!(character, '.' | 'e' | 'E'))
+        || raw.parse::<i64>().is_err()
+    {
         return Err("JSON-RPC id must be a string or integer".to_string());
     }
     Ok(raw.to_string())
@@ -138,7 +143,7 @@ fn value_end(input: &str, start: usize) -> Result<usize, String> {
         Some(b'{') | Some(b'[') => composite_end(input, start),
         Some(_) => {
             let mut cursor = start;
-            while let Some(byte) = bytes.get(cursor) {
+            while let Some(byte) = bytes.get(cursor).copied() {
                 if matches!(byte, b',' | b'}') || byte.is_ascii_whitespace() {
                     break;
                 }
@@ -269,7 +274,10 @@ mod tests {
         .expect("parse request");
         assert_eq!(request.id.as_deref(), Some("7"));
         assert_eq!(request.method, "ping");
-        assert_eq!(request.params.required_string("method").expect("method"), "wrong");
+        assert_eq!(
+            request.params.required_string("method").expect("method"),
+            "wrong"
+        );
     }
 
     #[test]
@@ -283,10 +291,10 @@ mod tests {
 
     #[test]
     fn duplicate_and_unknown_top_level_fields_are_rejected() {
-        assert!(Request::parse(
-            r#"{"jsonrpc":"2.0","id":1,"id":2,"method":"ping"}"#
-        )
-        .is_err());
+        assert!(
+            Request::parse(r#"{"jsonrpc":"2.0","id":1,"id":2,"method":"ping"}"#)
+                .is_err()
+        );
         assert!(Request::parse(
             r#"{"jsonrpc":"2.0","id":1,"method":"ping","unexpected":true}"#
         )
