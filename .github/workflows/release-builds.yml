@@ -61,6 +61,7 @@ jobs:
           path: |
             target/${{ matrix.target }}/release/icstudio${{ matrix.executable_suffix }}
             target/${{ matrix.target }}/release/icstudio-mcp${{ matrix.executable_suffix }}
+            target/${{ matrix.target }}/release/icstudio-ui-bridge${{ matrix.executable_suffix }}
             target/${{ matrix.target }}/release/icstudio-worker${{ matrix.executable_suffix }}
           if-no-files-found: error
           retention-days: 30
