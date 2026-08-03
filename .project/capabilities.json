@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
   "programme": "ICStudio 1.0",
-  "accepted_commit": "07b0858a9bb4d8a2f2288dfa9eed5440d78efa05",
+  "accepted_commit": "c63c0b87c958bb11ce9c49a2b18851fd0075f96a",
   "capabilities": [
-    {"id":"CAP-INFRA-BOOT","name":"Reproducible build and CI","status":"accepted","tier":0,"milestone":"M0","evidence":["Cargo.lock","rust-toolchain.toml","justfile",".github/workflows/ci.yml","GitHub Actions run 30773006326: Ubuntu, macOS, Windows, and Linux container passed"],"limitations":[]},
-    {"id":"CAP-PROJ-DB","name":"Project/library/cell/view database","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Not implemented"]},
-    {"id":"CAP-TXN","name":"Transactions, undo, and crash recovery","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Only programme checkpoints exist"]},
-    {"id":"CAP-RPC","name":"Typed worker protocol","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Not implemented"]},
-    {"id":"CAP-MCP-BASE","name":"MCP lifecycle and discovery","status":"accepted","tier":0,"milestone":"M0","evidence":["crates/platform/src/bin/icstudio-mcp.rs","crates/platform/tests/mcp_stdio.rs","GitHub Actions run 30773006326: stdio MCP smoke passed on Ubuntu, macOS, and Windows"],"limitations":["Read-only stdio smoke surface","Minimal bootstrap JSON decoder","No HTTP transport"]},
-    {"id":"CAP-MCP-READ","name":"Revisioned engineering resources","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Only programme status is readable"]},
+    {"id":"CAP-INFRA-BOOT","name":"Reproducible build and CI","status":"accepted","tier":0,"milestone":"M0","evidence":["Cargo.lock","rust-toolchain.toml","justfile",".github/workflows/ci.yml","GitHub Actions run 30774870611: Ubuntu, macOS, Windows, and Linux container passed"],"limitations":[]},
+    {"id":"CAP-PROJ-DB","name":"Project/library/cell/view database","status":"accepted","tier":1,"milestone":"M1","evidence":["crates/project/src/lib.rs","schemas/project-v1.txt","create/save/reopen tests on Ubuntu macOS and Windows","stable 128-bit identities","deterministic serialization round trip"],"limitations":["Metadata hierarchy only","No schematic or layout object payloads","No content-addressed large-object store","No migrations beyond schema version 1"]},
+    {"id":"CAP-TXN","name":"Transactions, undo, and crash recovery","status":"candidate","tier":0,"milestone":"M1","evidence":["Optimistic expected-revision validation","atomic multi-mutation apply","write-ahead ready journal","injected-termination recovery test","stale transaction rejection test"],"limitations":["Add-only mutations","No undo or redo stack","No transaction event stream","No concurrent writer lock"]},
+    {"id":"CAP-RPC","name":"Typed worker protocol","status":"accepted","tier":0,"milestone":"M1","evidence":["crates/rpc/src/lib.rs","schemas/rpc-v1.txt","request and response round-trip tests","isolated worker ping test","worker crash isolation test"],"limitations":["Line-oriented bootstrap transport","Only ping and crash-test commands","No cancellation","No shared-memory payload channel","No production supervisor"]},
+    {"id":"CAP-MCP-BASE","name":"MCP lifecycle and discovery","status":"accepted","tier":0,"milestone":"M0","evidence":["crates/platform/src/bin/icstudio-mcp.rs","crates/platform/tests/mcp_stdio.rs","GitHub Actions run 30774870611: stdio MCP tests passed on Ubuntu macOS and Windows"],"limitations":["Read-only stdio surface","Minimal bootstrap JSON decoder","No HTTP transport"]},
+    {"id":"CAP-MCP-READ","name":"Revisioned engineering resources","status":"candidate","tier":0,"milestone":"M1","evidence":["icstudio://project/revision/{revision}","project.inspect","CLI and MCP state/revision equivalence test"],"limitations":["Hierarchy summary only","No bounded object traversal","No geometry or netlist resources","Requires local ICSTUDIO_ACTIVE_PROJECT configuration"]},
     {"id":"CAP-MCP-MUTATE","name":"Transactional semantic design patches","status":"planned","tier":0,"milestone":"M2","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-MCP-JOBS","name":"Cancellable solver jobs","status":"planned","tier":0,"milestone":"M2","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-MCP-AGENTFLOW","name":"End-to-end LLM design flow","status":"planned","tier":0,"milestone":"M4","evidence":[],"limitations":["Not implemented"]},
@@ -16,7 +16,7 @@
     {"id":"CAP-SCH-EDIT","name":"Schematic and symbol editing","status":"planned","tier":0,"milestone":"M2","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-CONNECT","name":"Connectivity and ERC foundation","status":"planned","tier":0,"milestone":"M2","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-LAY-EDIT","name":"Hierarchical layout editing","status":"planned","tier":0,"milestone":"M3","evidence":[],"limitations":["Not implemented"]},
-    {"id":"CAP-GEO-KERNEL","name":"Exact integer geometry","status":"planned","tier":0,"milestone":"M1","evidence":[],"limitations":["Not implemented"]},
+    {"id":"CAP-GEO-KERNEL","name":"Exact integer geometry","status":"candidate","tier":1,"milestone":"M1","evidence":["crates/geometry/src/lib.rs","signed 64-bit rectangle semantics","overflow-checked translation","deterministic intersection queries","one-million-shape release baseline in GitHub Actions run 30774870611"],"limitations":["Rectangles only","No polygons paths transforms hierarchy topology or Boolean operations","Reference min-X index is not a production R-tree"]},
     {"id":"CAP-IO-GDS","name":"GDSII import and export","status":"planned","tier":0,"milestone":"M3","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-IO-OASIS","name":"OASIS import and export","status":"planned","tier":0,"milestone":"M3","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-EXP","name":"Experiment orchestration","status":"planned","tier":0,"milestone":"M4","evidence":[],"limitations":["Not implemented"]},
@@ -45,6 +45,6 @@
     {"id":"CAP-PHOTONICS","name":"Photonic design and simulation","status":"planned","tier":0,"milestone":"M6","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-OPTIMIZE","name":"Optimization, variation, and yield","status":"planned","tier":0,"milestone":"M6","evidence":[],"limitations":["Not implemented"]},
     {"id":"CAP-FLOW-OPENPDK","name":"Qualified end-to-end open-PDK flow","status":"planned","tier":0,"milestone":"M8","evidence":[],"limitations":["Not implemented"]},
-    {"id":"CAP-RELEASE","name":"Signed cross-platform release","status":"candidate","tier":0,"milestone":"M0","evidence":[".github/workflows/release-builds.yml"],"limitations":["Native target matrix is defined but has not been exercised by a version tag","Bootstrap CLI and MCP binaries only","No desktop application installers","No signing or notarization"]}
+    {"id":"CAP-RELEASE","name":"Signed cross-platform release","status":"candidate","tier":0,"milestone":"M0","evidence":[".github/workflows/release-builds.yml"],"limitations":["Native target matrix is defined but has not been exercised by a version tag","CLI MCP and worker binaries only","No desktop application installers","No signing or notarization"]}
   ]
 }
