@@ -7,7 +7,7 @@ rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
 autobins = false
-description = "ICStudio platform services, programme state, project commands, MCP gateway, and worker entry points"
+description = "ICStudio platform services, programme state, project commands, MCP gateway, workbench bridge, and worker entry points"
 
 [dependencies]
 icstudio-project = { path = "../project" }
@@ -24,6 +24,10 @@ path = "src/bin/icstudio.rs"
 [[bin]]
 name = "icstudio-mcp"
 path = "src/bin/icstudio-mcp.rs"
+
+[[bin]]
+name = "icstudio-ui-bridge"
+path = "src/bin/icstudio-ui-bridge.rs"
 
 [[bin]]
 name = "icstudio-worker"
