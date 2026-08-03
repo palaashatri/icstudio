@@ -81,11 +81,37 @@ fn stdio_server_negotiates_and_lists_the_read_only_surface() {
     assert!(tools.contains("capability.report"));
     assert!(tools.contains("project.inspect"));
     assert!(prompts.contains("icstudio.project.review"));
-    assert!(report.contains("\"truthScore\":2.00"));
+    assert!(report.contains("\"truthScore\":5.00"));
     assert!(report.contains("project database foundation in development"));
 
     let status = child.wait().expect("wait for MCP server");
     assert!(status.success());
+}
+
+#[test]
+fn stdio_server_uses_top_level_correlation_fields() {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_icstudio-mcp"))
+        .env("ICSTUDIO_PROJECT_ROOT", repository_root())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("spawn MCP server");
+    let mut stdin = child.stdin.take().expect("child stdin");
+    writeln!(
+        stdin,
+        "{{\"jsonrpc\":\"2.0\",\"params\":{{\"id\":999,\"method\":\"tools/list\"}},\"id\":77,\"method\":\"ping\"}}"
+    )
+    .expect("nested-field request");
+    drop(stdin);
+
+    let mut response = String::new();
+    BufReader::new(child.stdout.take().expect("child stdout"))
+        .read_line(&mut response)
+        .expect("response");
+    assert!(response.contains("\"id\":77"));
+    assert!(!response.contains("\"id\":999"));
+    assert!(response.contains("\"result\":{}"));
+    assert!(child.wait().expect("wait").success());
 }
 
 #[test]
@@ -171,7 +197,7 @@ fn stdio_server_rejects_an_unlocked_protocol_revision() {
     let mut stdin = child.stdin.take().expect("child stdin");
     writeln!(
         stdin,
-        "{{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"initialize\",\"params\":{{\"protocolVersion\":\"1900-01-01\"}}}}"
+        "{{\"jsonrpc\":\"2.0\",\"id\":9,\"method\":\"initialize\",\"params\":{{\"protocolVersion\":\"1900-01-01\",\"capabilities\":{{}},\"clientInfo\":{{\"name\":\"m1-test\",\"version\":\"0.1\"}}}}}}"
     )
     .expect("request");
     drop(stdin);
@@ -180,6 +206,7 @@ fn stdio_server_rejects_an_unlocked_protocol_revision() {
         .read_line(&mut response)
         .expect("response");
     assert!(response.contains("unsupported MCP protocol revision"));
+    assert!(response.contains("2025-11-25"));
     assert!(response.contains("\"code\":-32602"));
     assert!(child.wait().expect("wait").success());
 }
