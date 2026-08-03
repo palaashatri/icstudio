@@ -6,7 +6,10 @@ license.workspace = true
 rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
-description = "ICStudio platform bootstrap, project state, truth scoring, and MCP gateway"
+description = "ICStudio platform services, programme state, project commands, and MCP gateway"
+
+[dependencies]
+icstudio-project = { path = "../project" }
 
 [lib]
 name = "icstudio_platform"
