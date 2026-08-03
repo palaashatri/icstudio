@@ -23,10 +23,14 @@ test("compiled Electron shell preserves the least-privilege boundary", async () 
 test("renderer build contains the project snapshot and WebGPU scene", async () => {
   const rendererDirectory = path.join(workbenchRoot, "dist-renderer");
   const index = await readFile(path.join(rendererDirectory, "index.html"), "utf8");
-  const assetNames = await readdir(path.join(rendererDirectory, "assets"));
+  const assetDirectory = path.join(rendererDirectory, "assets");
+  const assetNames = await readdir(assetDirectory);
   const scripts = assetNames.filter((name) => name.endsWith(".js"));
   assert.ok(scripts.length > 0, "renderer JavaScript bundle is missing");
-  const bundle = await readFile(path.join(rendererDirectory, "assets", scripts[0]), "utf8");
+  const bundles = await Promise.all(
+    scripts.map((name) => readFile(path.join(assetDirectory, name), "utf8"))
+  );
+  const bundle = bundles.join("\n");
 
   assert.match(index, /ICStudio Workbench/);
   assert.match(bundle, /readProjectSnapshot/);
