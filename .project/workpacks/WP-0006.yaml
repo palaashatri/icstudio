@@ -1,0 +1,19 @@
+id: WP-0006
+title: Java J0 reproducible factory
+status: planned
+priority: critical
+milestone: J0
+parent: WP-0005
+spec: .project/decisions/ADR-0001-java25-swing-pivot.toml
+branch: milestone/m0-reproducible-factory
+acceptance:
+  - Temurin 25.0.4+7 reference toolchain
+  - Maven 3.9.16 wrapper reactor
+  - JUnit 6.1.2 smoke tests
+  - Windows macOS Linux native CI
+  - reproducible non-root Linux Java image
+  - Java dependency licence evidence
+  - CycloneDX 2.9.3 SBOM
+  - checkpoint CP-JAVA-M0-FACTORY
+truth_on_acceptance: 2.0
+m2_blocked: true

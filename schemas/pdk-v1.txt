@@ -1,0 +1,19 @@
+ICStudio PDK metadata format, version 1
+
+Scope: technology identity, database units, layer-purpose to GDS mapping, and relative model references.
+Non-scope: executable PCells, rule decks, compact-model evaluation, foundry qualification, encrypted data, and proprietary PDK compatibility.
+Encoding: UTF-8 text with LF line endings and tab-separated escaped fields.
+Ordering: technology record, layer-purpose records ordered by canonical key, model records ordered by name.
+
+Grammar:
+ICSTUDIO_PDK<TAB>1
+technology<TAB>NAME<TAB>DBU_PER_MICRON
+layer<TAB>NAME<TAB>PURPOSE<TAB>GDS_LAYER<TAB>GDS_DATATYPE
+model<TAB>NAME<TAB>KIND<TAB>SAFE_RELATIVE_PATH
+
+Invariants:
+- DBU_PER_MICRON is non-zero.
+- layer-purpose pairs are unique.
+- GDS layer/datatype pairs are unique.
+- model names are unique.
+- model paths are relative and contain no parent traversal.

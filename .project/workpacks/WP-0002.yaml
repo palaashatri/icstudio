@@ -1,0 +1,88 @@
+id: WP-0002
+title: Establish M1 headless design-kernel foundation
+capabilities:
+  - CAP-PROJ-DB
+  - CAP-TXN
+  - CAP-RPC
+  - CAP-MCP-READ
+  - CAP-GEO-KERNEL
+milestone: M1
+status: accepted
+priority: critical
+owner: chatgpt-gpt-5.6-thinking
+reviewer: independent-ci
+qa_owner: independent-ci
+depends_on:
+  - WP-0001
+contracts:
+  inputs:
+    - AGENTS.md#8
+    - AGENTS.md#17-M1
+    - schemas/project-v1.txt
+    - schemas/rpc-v1.txt
+  outputs:
+    - authoritative library/cell/view hierarchy
+    - stable 128-bit object identities
+    - optimistic revision-safe transactions
+    - deterministic native metadata serialization
+    - write-ahead journal and crash recovery
+    - signed 64-bit rectangle geometry
+    - deterministic spatial index baseline
+    - isolated typed worker process
+    - revision-addressed MCP project resource
+allowed_paths:
+  - Cargo.toml
+  - Cargo.lock
+  - crates/project/**
+  - crates/geometry/**
+  - crates/rpc/**
+  - crates/platform/**
+  - schemas/**
+  - justfile
+  - .github/workflows/**
+  - .project/**
+  - README.md
+forbidden_paths:
+  - AGENTS.md
+acceptance:
+  commands:
+    - just build
+    - just test-fast
+    - just test-m1-geometry
+    - just validate
+    - just mcp-smoke
+  tests:
+    - project::create_save_reopen_preserves_hierarchy_and_ids
+    - project::serialization_round_trip_is_deterministic
+    - project::ready_journal_recovers_after_injected_termination
+    - project::stale_revision_is_rejected_without_mutation
+    - geometry::indexes_and_queries_one_million_simple_shapes
+    - rpc::request_round_trip_preserves_revision_and_payload
+    - worker_isolation::worker_crash_does_not_corrupt_or_terminate_the_platform
+    - mcp_stdio::cli_and_mcp_expose_the_same_project_state_and_revision
+  performance_budget:
+    shape_count: 1000000
+    build_max_millis: 30000
+    query_max_micros: 1000000
+clean_room:
+  proprietary_inputs_used: false
+  public_sources: []
+limitations:
+  - no desktop UI state consumer yet
+  - no PDK schema or runtime yet
+  - no netlist IR or result database yet
+  - spatial index is a reference implementation, not a production R-tree
+  - MCP project surface is read-only
+  - worker protocol currently has only health and crash-test commands
+evidence:
+  accepted_commit: c63c0b87c958bb11ce9c49a2b18851fd0075f96a
+  workflow_run: 30774870611
+  gates:
+    - ubuntu-latest cross-platform gate: passed
+    - macos-latest cross-platform gate: passed
+    - windows-latest cross-platform gate: passed
+    - reproducible Linux image: passed
+    - one-million-shape Ubuntu release baseline: passed
+checkpoint:
+  last_green_commit: c63c0b87c958bb11ce9c49a2b18851fd0075f96a
+  notes: This work package is accepted as a partial M1 foundation. M1 remains in progress until its remaining mandatory tracks and gates are implemented.

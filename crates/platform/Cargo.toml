@@ -1,0 +1,34 @@
+[package]
+name = "icstudio-platform"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+autobins = false
+description = "ICStudio platform services, programme state, project commands, MCP gateway, workbench bridge, and worker entry points"
+
+[dependencies]
+icstudio-project = { path = "../project" }
+icstudio-rpc = { path = "../rpc" }
+
+[lib]
+name = "icstudio_platform"
+path = "src/lib.rs"
+
+[[bin]]
+name = "icstudio"
+path = "src/bin/icstudio.rs"
+
+[[bin]]
+name = "icstudio-mcp"
+path = "src/bin/icstudio-mcp.rs"
+
+[[bin]]
+name = "icstudio-ui-bridge"
+path = "src/bin/icstudio-ui-bridge.rs"
+
+[[bin]]
+name = "icstudio-worker"
+path = "src/bin/icstudio-worker.rs"

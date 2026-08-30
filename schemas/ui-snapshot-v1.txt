@@ -1,0 +1,44 @@
+ICStudio workbench snapshot contract v1
+=======================================
+
+Authority
+---------
+
+The Rust platform service owns project state. The Electron renderer MUST NOT read or parse
+project files. It receives the exact JSON object emitted by `Project::summary_json()` through
+the `icstudio-ui-bridge` process and a sandboxed Electron preload IPC handler.
+
+JSON fields
+-----------
+
+schemaVersion : integer, currently 1
+projectId     : 32 lowercase hexadecimal characters (128-bit persistent identity)
+name          : non-empty project name
+revision      : non-negative safe integer
+libraries     : non-negative safe integer
+cells         : non-negative safe integer
+views         : non-negative safe integer
+
+No additional fields are accepted by the M1 renderer. The decoded object is immutable.
+
+Security boundary
+-----------------
+
+- Electron context isolation is enabled.
+- Renderer sandboxing is enabled.
+- Node integration is disabled.
+- The preload exposes only `readProjectSnapshot()`.
+- The bridge accepts one bounded `--path` argument and returns one JSON line.
+- UI code has no direct filesystem, subprocess, project mutation, or MCP privilege.
+
+Equivalence gate
+----------------
+
+For the same project revision, all of these byte-level engineering payloads MUST agree:
+
+1. `icstudio project show --path ...`
+2. `icstudio-ui-bridge --path ...`
+3. MCP `project.inspect` structured content
+
+The Electron/React renderer decodes and displays that same payload without adding a second
+project model.

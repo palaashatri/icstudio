@@ -1,0 +1,79 @@
+id: WP-0003
+title: Complete remaining M1 headless schema foundations
+capabilities:
+  - CAP-PDK-BASE
+  - CAP-IO-GDS
+  - CAP-WAVE
+milestone: M1
+status: accepted
+priority: critical
+owner: chatgpt-gpt-5.6-thinking
+reviewer: independent-ci
+qa_owner: independent-ci
+depends_on:
+  - WP-0002
+contracts:
+  inputs:
+    - AGENTS.md#17-M1
+    - schemas/pdk-v1.txt
+    - schemas/results-v1.txt
+  outputs:
+    - deterministic PDK technology metadata
+    - layer-purpose and GDS mapping validation
+    - safe relative model references
+    - structural netlist IR
+    - bounded SPICE parser scaffold
+    - deterministic result manifest and signal vectors
+    - bounded GDSII record-framing parser scaffold
+allowed_paths:
+  - Cargo.toml
+  - Cargo.lock
+  - crates/pdk/**
+  - crates/netlist/**
+  - crates/results/**
+  - crates/formats/**
+  - crates/platform/**
+  - schemas/**
+  - .project/**
+  - README.md
+forbidden_paths:
+  - AGENTS.md
+acceptance:
+  commands:
+    - just build
+    - just test-fast
+    - just validate
+    - just license-check
+  tests:
+    - pdk::deterministic_round_trip_preserves_layer_purposes
+    - pdk::duplicate_gds_mapping_is_rejected
+    - netlist::parses_structural_cmos_inverter
+    - netlist::malformed_and_unsupported_input_reports_source_line
+    - results::exact_float_round_trip_is_deterministic
+    - results::save_open_and_summary_preserve_provenance
+    - formats::parses_framed_records_and_preserves_offsets
+    - formats::rejects_short_odd_and_truncated_records_with_offsets
+clean_room:
+  proprietary_inputs_used: false
+  public_sources:
+    - public SPICE syntax conventions
+    - public GDSII record-framing descriptions
+limitations:
+  - no PCell or rule-deck execution
+  - no compact-model evaluation
+  - SPICE values are structural strings with no electrical semantics
+  - GDSII geometry and hierarchy are not interpreted
+  - result vectors are local bounded scalar arrays only
+  - no desktop UI consumes these schemas
+evidence:
+  accepted_commit: 8f432b17b9ffbb2dfc1228a5063d6d347b10abb7
+  workflow_run: 30776034205
+  gates:
+    - ubuntu-latest factory gate: passed
+    - macos-latest factory gate: passed
+    - windows-latest factory gate: passed
+    - reproducible pinned non-root Linux image: passed
+    - one-million-shape Ubuntu release baseline: passed
+checkpoint:
+  last_green_commit: 8f432b17b9ffbb2dfc1228a5063d6d347b10abb7
+  notes: Remaining M1 headless schema tracks accepted. M1 remains in progress because the desktop/WebGPU and UI state-equivalence gate is not implemented.

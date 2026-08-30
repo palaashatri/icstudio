@@ -1,0 +1,67 @@
+name: Cross-platform release builds
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-native-binaries:
+    name: ${{ matrix.artifact }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: icstudio-linux-x86_64
+            executable_suffix: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: icstudio-windows-x86_64
+            executable_suffix: .exe
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: icstudio-macos-aarch64
+            executable_suffix: ""
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: icstudio-macos-x86_64
+            executable_suffix: ""
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+
+      - name: Install pinned Rust toolchain and target
+        shell: bash
+        run: |
+          rustup toolchain install 1.85.1 --profile minimal
+          rustup override set 1.85.1
+          rustup target add "${{ matrix.target }}"
+
+      - name: Build release binaries
+        run: cargo build --workspace --release --locked --target ${{ matrix.target }}
+
+      - name: Upload native binaries
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            target/${{ matrix.target }}/release/icstudio${{ matrix.executable_suffix }}
+            target/${{ matrix.target }}/release/icstudio-mcp${{ matrix.executable_suffix }}
+            target/${{ matrix.target }}/release/icstudio-ui-bridge${{ matrix.executable_suffix }}
+            target/${{ matrix.target }}/release/icstudio-worker${{ matrix.executable_suffix }}
+          if-no-files-found: error
+          retention-days: 30

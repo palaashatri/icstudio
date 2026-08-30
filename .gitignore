@@ -1,0 +1,12 @@
+/target/
+/artifacts/
+/apps/workbench/node_modules/
+/apps/workbench/dist-main/
+/apps/workbench/dist-renderer/
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.project/checkpoints/*.local.json

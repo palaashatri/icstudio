@@ -1,0 +1,13 @@
+[package]
+name = "icstudio-netlist"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Deterministic circuit netlist IR and SPICE parser scaffold for ICStudio"
+
+[lib]
+name = "icstudio_netlist"
+path = "src/lib.rs"

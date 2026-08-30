@@ -1,0 +1,154 @@
+id = "ADR-0001"
+title = "Pivot ICStudio to an authoritative Java 25 and Swing architecture"
+status = "accepted"
+date = "2026-08-30"
+approved_by = "user"
+branch = "milestone/m0-reproducible-factory"
+supersedes_architecture = "Electron + React/TypeScript desktop over Rust platform services"
+
+[decision]
+authoritative_language = "Java 25"
+desktop_toolkit = "Swing"
+engineering_renderer = "Skija/Skia"
+native_interop = "JDK Foreign Function and Memory API"
+build_system = "Maven multi-module project with Maven Wrapper"
+process_model = "One authoritative Java application model with isolated Java worker JVMs for fault containment"
+license = "MIT for project-owned code"
+
+[decision.application_model]
+rule = "There is no permanent frontend/backend split inside the desktop application."
+authoritative_state = "Java domain services own project state, commands, transactions, geometry, connectivity, PDK metadata, netlist IR, result metadata, experiments, MCP semantics, and solver orchestration."
+ui_access = "Swing components call typed Java query and command APIs in-process. UI components may keep presentation state but never authoritative engineering state."
+serialization = "Serialization is used for files, checkpoints, process boundaries, external APIs, and tests; it is not used merely to move ordinary desktop state between a frontend and backend."
+
+[decision.ui]
+philosophy = "Professional and comfortable, Apple-HIG-informed rather than pixel-cloned; approachable by default and progressively disclosable for expert workflows."
+substrate = "Swing provides mature desktop windowing, menus, trees, tables, accessibility, focus, input, clipboard, printing, and platform integration."
+design_system = "ICStudio owns a reusable Studio* component library and semantic design tokens rather than styling application screens ad hoc."
+look_and_feel = "FlatLaf may be used as permissively licensed Swing plumbing after dependency and licence validation; ICStudio visual identity remains project-owned."
+rendering = "Schematic, layout, waveform, mesh, and field surfaces use Skija/Skia-backed custom canvases rather than large object graphs of ordinary Swing components."
+progressive_disclosure = true
+workspace_customization = "Dock, split, tab, float, collapse, save, restore, and keyboard-driven navigation are first-class requirements."
+
+[decision.materials]
+requirement = "Themes can request semantic materials such as solid, sidebar, toolbar, inspector, popover, menu, HUD, and canvas."
+macos = "Use AppKit visual-effect/material integration through a narrow Java FFM platform adapter where appropriate."
+windows = "Use supported Windows composition/material APIs through a narrow Java FFM platform adapter where appropriate."
+linux = "Use compositor-aware blur/translucency where supported and deterministic translucent or opaque fallbacks otherwise."
+accessibility = "Respect platform reduce-transparency/reduce-motion preferences where exposed and always provide a fully opaque high-contrast path."
+canvas_rule = "Engineering canvases default to controlled solid surfaces; wallpaper/background blur must not compromise schematic, layout, waveform, console, or dense-data legibility."
+
+[decision.process_isolation]
+rule = "One language does not mean one process."
+workers = "Simulation, DRC, LVS, PEX, EM, thermal, reliability, photonics, optimization, untrusted PDK execution, plugins, and hostile file import may run in isolated worker JVMs."
+protocol = "Worker communication remains versioned, cancellable, revision-addressed, and suitable for binary/shared-memory or memory-mapped payloads where needed."
+failure_domain = "A worker crash, malformed input, runaway job, or plugin failure must not corrupt project state or terminate the desktop workbench."
+
+[decision.native_reuse]
+policy = "Do not reinvent mature permissively licensed numerical, geometry, and interoperability foundations merely to preserve a pure-Java implementation."
+interop_boundary = "Java FFM is the preferred native boundary; JNI is fallback-only and requires an ADR-level justification for new project-owned bindings."
+preferred_categories = [
+  "GDSII/OASIS and polygon geometry libraries such as gdstk where licence and API review pass",
+  "reference or bootstrap circuit simulation through ngspice where licence-component review passes",
+  "numerical integration/nonlinear infrastructure such as SUNDIALS",
+  "BLAS/LAPACK implementations such as OpenBLAS",
+  "large sparse/PDE/HPC infrastructure such as PETSc",
+  "digital physical-design interoperability such as OpenDB where its data model is appropriate"
+]
+external_oracles = [
+  "KLayout",
+  "Xyce",
+  "Magic",
+  "Netgen",
+  "Xschem",
+  "OpenROAD"
+]
+external_oracle_rule = "Reciprocal/GPL tools remain separate processes or differential-test oracles unless a later legal and architectural review explicitly approves another relationship."
+
+[decision.java_module_model]
+modules = [
+  "icstudio-core",
+  "icstudio-project",
+  "icstudio-command",
+  "icstudio-geometry",
+  "icstudio-connectivity",
+  "icstudio-pdk",
+  "icstudio-netlist-ir",
+  "icstudio-result-db",
+  "icstudio-experiment",
+  "icstudio-mcp",
+  "icstudio-cli",
+  "icstudio-ui",
+  "icstudio-platform",
+  "icstudio-worker"
+]
+rule = "Module boundaries are for maintainability, testing, and process isolation; they must not recreate a network-style frontend/backend architecture."
+
+[decision.mcp]
+implementation = "The MCP server is Java and delegates to the same typed query/command services used by Swing and CLI."
+separate_process = "The MCP host may run separately for least privilege and external integration, but it must not duplicate engineering semantics or parse authoritative project files independently."
+
+[migration]
+strategy = "Conformance-first replacement"
+legacy_checkpoint = "CP-M1-KERNEL"
+legacy_stack_role = "The accepted Rust/Electron M1 implementation remains temporarily as a read-only behavioural and file-format conformance oracle."
+no_m2_before_parity = true
+
+[[migration.phases]]
+id = "J0"
+name = "Java factory"
+exit = "JDK 25 + Maven Wrapper builds and tests on Windows, macOS, Linux, and the reproducible Linux image; licence/SBOM/checkpoint machinery supports Java dependencies."
+score_after_exit = 2.0
+
+[[migration.phases]]
+id = "J1"
+name = "Java M1 parity"
+exit = "Java reproduces CP-M1-KERNEL contracts: project create/save/reopen, stable IDs, deterministic serialization, journal recovery, exact integer geometry baseline, worker crash isolation, PDK/netlist/result scaffolds, CLI/MCP equivalence, Swing shell, Skia scene prototype, and UI/CLI/MCP state-and-revision equivalence."
+score_after_exit = 8.0
+
+[[migration.phases]]
+id = "J2"
+name = "Remove superseded application stack"
+exit = "Rust/Electron application code is removed only after Java parity is accepted and cross-platform conformance evidence is archived. Reusable independent test fixtures and format corpus are retained."
+score_after_exit = 8.0
+
+[migration.truth_policy]
+on_adr_acceptance = "When this ADR is accepted and AGENTS.md is amended, reset the live implementation truth score to 0/100 because the authoritative target stack changed. Preserve the previous 8/100 CP-M1-KERNEL as historical evidence, not current implementation credit."
+after_java_factory = "Restore M0 credit to 2/100 only after J0 gates pass."
+after_java_m1 = "Restore M1 credit to 8/100 only after J1 parity gates pass."
+no_double_counting = "Legacy Rust/Electron capability evidence cannot be counted as current Java implementation evidence."
+
+[migration.compatibility]
+project_format = "Prefer preserving the existing documented M1 project/schema semantics so Java can differential-test against the Rust oracle. Any incompatible format change requires versioned migration tests."
+mcp = "Preserve the locked MCP protocol baseline and behavioural fixtures while replacing implementation language."
+geometry = "Preserve signed 64-bit authoritative DBU semantics and stable-ID guarantees."
+
+[testing]
+required = [
+  "Unit tests for every Java module",
+  "Cross-platform Windows/macOS/Linux CI",
+  "Deterministic project round-trip tests",
+  "Injected-crash journal recovery",
+  "Rust-oracle versus Java differential tests during migration",
+  "One-million-shape reference geometry baseline",
+  "Worker crash-containment tests",
+  "Swing/CLI/MCP authoritative-state equivalence",
+  "Visual regression tests for ICStudio design-system components",
+  "Keyboard/focus/accessibility conformance tests",
+  "Native material fallback tests",
+  "Dependency licence and dual Java/native SBOM validation"
+]
+
+[non_goals]
+items = [
+  "Keeping Electron, React, TypeScript, or Node as a permanent desktop dependency",
+  "Keeping Rust as a permanent application backend solely because M1 already exists",
+  "Rewriting mature permissively licensed numerical primitives in Java without product-specific justification",
+  "Eliminating process isolation for solvers, plugins, hostile imports, or untrusted PDK code",
+  "Pixel-cloning macOS or making non-Apple platforms behave incorrectly merely to imitate macOS",
+  "Starting M2 schematic/simulation implementation before Java M1 conformance is accepted"
+]
+
+[acceptance]
+requires_user_review = false
+next_after_acceptance = "Execute WP-0005 test-first on the same implementation branch; M2 remains blocked until CP-JAVA-M1-KERNEL."
