@@ -35,7 +35,7 @@ jobs:
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
-          java-version: '25.0.4+7'
+          java-version: '25.0.4+7.0.LTS'
 
       - name: Run missing ObjectId contract
         run: mvn -B -ntp -Denforcer.skip=true -pl java/icstudio-core -am test
