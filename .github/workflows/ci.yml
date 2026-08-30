@@ -21,6 +21,25 @@ env:
   RUST_BACKTRACE: "1"
 
 jobs:
+  java-j0-red:
+    name: Java J0 RED gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+
+      - name: Install Temurin JDK 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '25.0.4+7'
+
+      - name: Run missing ObjectId contract
+        run: mvn -B -ntp -Denforcer.skip=true -pl java/icstudio-core -am test
+
   cross-platform-factory:
     name: ${{ matrix.os }} factory gate
     runs-on: ${{ matrix.os }}
