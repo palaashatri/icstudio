@@ -1,0 +1,370 @@
+#!/usr/bin/env python3
+"""Apply accepted ADR-0001 architecture state to repository governance files."""
+
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def replace_constitution_sections() -> None:
+    path = ROOT / "AGENTS.md"
+    agents = path.read_text()
+    start = agents.index("# 5. High-level architecture")
+    end = agents.index("# 8. Core data model")
+    replacement = r'''# 5. High-level architecture
+
+ICStudio is a **Java 25 application end to end**. Swing is the desktop substrate; the UI and engineering core share one authoritative in-process Java object model. Module boundaries exist for maintainability, testing, and deliberate fault containment, not to recreate a frontend/backend web architecture.
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ ICStudio Desktop, Headless, and AI Surfaces                                 │
+│ Swing + Studio* design system | Skija/Skia canvases | CLI | SDK | MCP      │
+└───────────────────────────────┬──────────────────────────────────────────────┘
+                                │ typed in-process Java query/command APIs
+┌───────────────────────────────▼──────────────────────────────────────────────┐
+│ Authoritative Java 25 Domain Services                                       │
+│ project/session | commands/transactions | geometry/connectivity | PDK        │
+│ netlist/result IR | experiments | jobs | provenance | permission policy      │
+└───────────────┬──────────────────────┬───────────────────────┬───────────────┘
+                │                      │                       │
+┌───────────────▼────────────┐ ┌───────▼──────────────┐ ┌──────▼──────────────┐
+│ Design/Geometry Domain     │ │ Simulation IR        │ │ Verification IR      │
+│ Java 25                    │ │ Java 25              │ │ Java 25              │
+│ DBU, hierarchy, topology,  │ │ devices, equations,  │ │ layers, rules, nets, │
+│ spatial index, formats     │ │ analyses, results    │ │ markers, extraction  │
+└───────────────┬────────────┘ └────────┬─────────────┘ └────────┬─────────────┘
+                │                       │                         │
+┌───────────────▼───────────────────────▼─────────────────────────▼────────────┐
+│ Isolated Java Worker JVMs                                                   │
+│ SPICE | FastSPICE | RF | Digital | AMS | DRC | LVS | PEX | EM | EMIR |      │
+│ Thermal | Reliability | Photonics | Optimization | plugins | hostile import │
+└───────────────────────────────┬──────────────────────────────────────────────┘
+                                │ Java FFM / versioned worker protocols
+┌───────────────────────────────▼──────────────────────────────────────────────┐
+│ Mature Native Libraries, PDKs, Models, Standards, and External Oracles      │
+│ permissive C/C++ libraries through FFM | separate-process reciprocal tools   │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 5.1 Process isolation
+
+One language does not mean one process. Simulation, DRC, LVS, PEX, EM, thermal, reliability, photonics, optimization, untrusted PDK execution, plugins, and hostile file import may run in isolated Java worker JVMs. A crash, malformed model, runaway job, or malicious extension must not corrupt authoritative project state or terminate the workbench.
+
+## 5.2 Authoritative state
+
+Java domain services own authoritative project state. Swing components, CLI commands, SDK calls, and MCP adapters consume the same typed Java query and command interfaces. UI objects may own presentation state such as selection, zoom, window placement, and transient editing affordances, but they must never become the only copy of engineering state.
+
+Ordinary desktop interaction is in-process. ICStudio MUST NOT serialize state through JSON, HTTP, REST, subprocess IPC, or a local web server merely to move data between its UI and engineering core.
+
+## 5.3 Communication and native interoperability
+
+- In-process desktop control uses typed Java interfaces and immutable value objects.
+- Worker-process control uses versioned schemas carrying project ID, expected revision, request/idempotency identity, actor, tool version, cancellation state, and structured diagnostics.
+- Large geometry, matrix, mesh, and waveform payloads use memory-mapped files, shared memory where safe, or chunked binary streams rather than oversized JSON.
+- The **Foreign Function and Memory API (FFM)** is the preferred Java/native boundary for mature permissively licensed C/C++ numerical, geometry, and interoperability libraries.
+- JNI is fallback-only for new project-owned bindings and requires an architecture decision explaining why FFM is insufficient.
+- GPL/reciprocal tools remain external processes or differential-test oracles unless an explicit legal and architectural review approves another relationship.
+
+## 5.4 MCP architectural boundary
+
+The ICStudio MCP server is implemented in Java and delegates to the same query/command services used by Swing and CLI. It may run as a separate least-privilege process for host integration, but it MUST NOT duplicate engineering semantics or independently parse/modify authoritative project files.
+
+- Local integrations use `stdio` by default.
+- Remote integrations use Streamable HTTP only when explicitly enabled.
+- Protocol revision negotiation is mandatory. The initial locked baseline remains MCP `2025-11-25` until changed through conformance tests and an ADR.
+- MCP tools invoke typed commands; resources expose bounded, redacted, revision-addressed context; prompts package recommended workflows.
+- Equivalent desktop, CLI, SDK, and MCP operations must resolve to equivalent command manifests and project revisions.
+
+## 5.5 Workbench and product-design requirements
+
+The desktop experience is professional, comfortable, and informed by Apple Human Interface Guidelines without pixel-cloning an Apple product or violating platform conventions.
+
+- **Approachable by default, powerful on demand.** Advanced parameters use progressive disclosure rather than permanent visual noise.
+- **One product, not beginner/expert modes.** Power emerges through expansion, customization, commands, shortcuts, scripting, and saved workspaces.
+- **Studio-owned components.** Application screens use reusable `Studio*` controls and semantic design tokens; raw look-and-feel keys do not become screen-level APIs.
+- **Flexible workspaces.** Dock, split, tab, float, collapse, resize, save, restore, and keyboard navigation are first-class.
+- **Engineering surfaces use Skija/Skia.** Schematic, layout, waveform, mesh, and field canvases are custom rendering surfaces rather than enormous Swing component trees.
+- **Semantic materials.** Themes request roles such as solid, sidebar, toolbar, inspector, popover, menu, HUD, and canvas. macOS may map these to AppKit visual-effect materials through FFM; Windows may map them to supported composition materials; Linux uses compositor-aware blur/translucency when available with deterministic fallbacks.
+- **Legibility wins over glass.** Schematic, layout, waveform, console, and dense-data surfaces default to controlled solid backgrounds even when surrounding chrome uses transparency or blur.
+- **Accessibility is mandatory.** Respect platform reduce-motion/reduce-transparency preferences where available, provide a fully opaque high-contrast path, preserve visible keyboard focus, and maintain usable keyboard-only workflows.
+
+---
+
+# 6. Repository layout
+
+```text
+/
+├── AGENTS.md
+├── README.md
+├── LICENSE
+├── SECURITY.md
+├── pom.xml                        # Java 25 Maven reactor
+├── mvnw / mvnw.cmd               # Maven 3.9.16 wrapper
+├── .mvn/wrapper/
+├── justfile                      # Canonical human/agent entry points
+├── toolchains/                   # Locked protocol/toolchain manifests
+├── schemas/                      # Language-neutral project/RPC/result schemas
+├── java/
+│   ├── icstudio-core/            # IDs, revisions, errors, immutable values
+│   ├── icstudio-project/         # project/library/cell/view and persistence
+│   ├── icstudio-command/         # transactions, history, journaling, recovery
+│   ├── icstudio-geometry/        # exact integer geometry and indexing
+│   ├── icstudio-connectivity/    # electrical/physical connectivity
+│   ├── icstudio-pdk/             # PDK runtime/package model
+│   ├── icstudio-netlist-ir/      # simulator-neutral netlist IR
+│   ├── icstudio-result-db/       # waveform/result storage
+│   ├── icstudio-experiment/      # ADE-style orchestration
+│   ├── icstudio-platform/        # platform integration and FFM adapters
+│   ├── icstudio-worker/          # isolated worker protocol/runtime
+│   ├── icstudio-cli/             # stable headless CLI
+│   ├── icstudio-mcp/             # MCP gateway over shared services
+│   ├── icstudio-ui/              # Swing Studio* design system and Skia hosts
+│   ├── icstudio-app/             # desktop application assembly/entry point
+│   └── icstudio-conformance/     # differential and cross-surface tests
+├── native/
+│   ├── numeric/                  # optional project-owned native kernels/adapters
+│   ├── geometry/
+│   └── openaccess-adapter/       # optional; separately built/licensed
+├── engines/                      # solver modules/workers by capability
+├── adapters/                     # external/open-tool interoperability
+├── formats/                      # public format fixtures/specification material
+├── pdk/                          # SDK, examples, validators
+├── benchmarks/
+├── corpus/
+├── research/
+├── examples/
+├── tests/
+├── ops/
+└── .project/
+    ├── capabilities.json
+    ├── milestones/
+    ├── workpacks/
+    ├── decisions/
+    ├── baselines/
+    └── checkpoints/
+```
+
+During ADR-0001 migration, the existing Rust crates and Electron/React workbench remain temporarily in their current paths as a **historical conformance oracle only**. They receive no new product capability work and are removed only after `CP-JAVA-M1-KERNEL` is accepted. Language-neutral schemas, test corpora, and historical checkpoints are retained.
+
+The project MUST NOT accumulate miscellaneous planning Markdown files. Engineering state belongs in this file or in structured files under `.project/`.
+
+---
+
+# 7. Language and toolchain policy
+
+## 7.1 Languages
+
+- **Java 25:** authoritative language for the desktop, project model, commands, geometry, connectivity, PDK runtime, formats, orchestration, CLI, MCP, solver orchestration, and project-owned reference solvers.
+- **C/C++23:** permitted behind Java FFM for mature ecosystem integration or kernels with demonstrated technical need. New native project-owned code requires a Java reference or conformance path where practical.
+- **Python 3.12+:** research, model generation, golden references, corpus generation, teaching, and user automation; never authoritative project state.
+- **CUDA/HIP and other accelerator languages:** optional acceleration behind tested CPU/reference behaviour.
+- **WASM:** preferred portable sandbox target where deterministic PCells/plugins benefit from it.
+- **Rust and TypeScript:** migration-only legacy implementation languages under ADR-0001. No new product capability is implemented in the old Rust/Electron stack after the architecture switch.
+
+## 7.2 Java and build baseline
+
+The migration baseline is:
+
+- Eclipse Temurin **25.0.4+7** for CI/reference JDK distribution;
+- Java language/API target **25**;
+- Apache Maven **3.9.16** through the Maven Wrapper;
+- JUnit **6.1.2** for Java tests;
+- FlatLaf **3.7.2** as optional Swing look-and-feel plumbing, never as the product design system;
+- Skija/Skia **0.143.17** for engineering-canvas rendering;
+- CycloneDX Maven Plugin **2.9.3** for Java dependency SBOM evidence.
+
+Maven 4 preview/RC builds are not production build dependencies until a later ADR adopts a GA release.
+
+Canonical developer entry points remain exposed through `just` so humans and agents do not need to know the underlying build topology:
+
+```bash
+just bootstrap
+just build
+just test
+just test-fast
+just test-capability CAP-SIM-DC
+just bench
+just studio
+just checkpoint
+just resume-check
+```
+
+Internally:
+
+- Maven Wrapper manages the authoritative Java reactor.
+- CMake + Ninja manage optional project-owned C/C++ code.
+- `uv` manages Python research/automation environments.
+- OCI containers provide reproducible CI images.
+- Java dependency resolution is locked by explicit versions, repository policy, SBOM, licence evidence, and reproducibility checks.
+- `just` may invoke the legacy Cargo/npm gates only while they remain required as migration-oracle evidence.
+
+Agents MUST call canonical `just` targets rather than inventing undocumented build commands.
+
+## 7.3 Supported platforms
+
+Production desktop targets are:
+
+- Windows 11 x86-64; ARM64 becomes mandatory when the chosen JDK/native dependency set is supportable without emulation-only product claims;
+- macOS current and previous major release, Apple Silicon first, Intel while dependencies remain supportable;
+- Linux x86-64, with Ubuntu LTS and Fedora as reference distributions.
+
+Headless workers support Linux first when a capability requires platform-specific acceleration, but ordinary desktop use MUST NOT require a Linux VM.
+
+## 7.4 ADR-0001 migration gate
+
+The accepted Rust/Electron `CP-M1-KERNEL` checkpoint is historical evidence, not current implementation credit after this architecture switch.
+
+Migration proceeds in three gates:
+
+1. **J0 — Java factory:** Java 25/Maven builds, tests, licence/SBOM evidence, checkpoints, and Windows/macOS/Linux/container CI are accepted. Live truth becomes **2/100**.
+2. **J1 — Java M1 parity:** Java reproduces the M1 project, recovery, geometry, worker, PDK/netlist/result, CLI/MCP, Swing shell, Skia scene, and cross-surface equivalence contracts. Live truth becomes **8/100** and `CP-JAVA-M1-KERNEL` is created.
+3. **J2 — Legacy retirement:** old production Rust/Electron/Node application code is removed after J1 evidence is archived. Removing superseded code does not itself increase truth score.
+
+Immediately after this architecture switch, live truth is **0/100**. The previous 8/100 remains preserved in `CP-M1-KERNEL` and historical evidence. No M2 schematic/simulation implementation may begin before J1 is accepted.
+
+---
+
+'''
+    path.write_text(agents[:start] + replacement + agents[end:])
+
+
+def accept_adr() -> None:
+    path = ROOT / ".project/decisions/ADR-0001-java25-swing-pivot.toml"
+    adr = path.read_text()
+    adr = adr.replace('status = "proposed"', 'status = "accepted"', 1)
+    adr = adr.replace('requires_user_review = true', 'requires_user_review = false', 1)
+    adr = adr.replace(
+        'next_after_acceptance = "Amend AGENTS.md architecture/repository/toolchain sections, create the detailed implementation plan, reset live truth per migration.truth_policy, then execute J0 and J1 test-first on the same implementation branch."',
+        'next_after_acceptance = "Execute WP-0005 test-first on the same implementation branch; M2 remains blocked until CP-JAVA-M1-KERNEL."',
+        1,
+    )
+    if 'approved_by = "user"' not in adr:
+        adr = adr.replace('date = "2026-08-30"\n', 'date = "2026-08-30"\napproved_by = "user"\n', 1)
+    path.write_text(adr)
+
+
+def reset_truth() -> None:
+    path = ROOT / ".project/truth.json"
+    truth = json.loads(path.read_text())
+    truth["historical_baseline"] = {
+        "checkpoint": "CP-M1-KERNEL",
+        "score": 8.0,
+        "architecture": "Rust + Electron/React M1",
+        "credit": "historical-only",
+    }
+    truth["active_architecture"] = "Java 25 + Swing migration (ADR-0001)"
+    truth["reported_score"] = 0.0
+    truth["assessment"] = (
+        "ADR-0001 changed the authoritative implementation stack to Java 25 + Swing. "
+        "The prior Rust/Electron M0/M1 implementation remains preserved as CP-M1-KERNEL "
+        "and a conformance oracle, but contributes no live implementation credit. J0 must "
+        "re-establish the Java factory before M0 returns to 2/100; J1 must reproduce M1 "
+        "before the score returns to 8/100. M2 is blocked until CP-JAVA-M1-KERNEL is accepted."
+    )
+    for milestone in truth["milestones"]:
+        if milestone["id"] in ("M0", "M1"):
+            milestone["completion"] = 0.0
+            milestone["status"] = "migration-required"
+    migration_risk = (
+        "Authoritative Java 25/Swing migration is in progress; historical Rust/Electron "
+        "evidence does not count toward live truth"
+    )
+    if migration_risk not in truth["known_risks"]:
+        truth["known_risks"].insert(0, migration_risk)
+    path.write_text(json.dumps(truth, indent=2) + "\n")
+
+
+def reset_capabilities() -> None:
+    path = ROOT / ".project/capabilities.json"
+    document = json.loads(path.read_text())
+    document["historical_accepted_commit"] = document.get("accepted_commit")
+    document["accepted_commit"] = ""
+    document["active_architecture"] = "Java 25 + Swing migration (ADR-0001)"
+    document["migration_oracle_checkpoint"] = "CP-M1-KERNEL"
+    limitation = (
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and "
+        "does not count as current Java capability acceptance"
+    )
+    for capability in document["capabilities"]:
+        if capability.get("status") != "planned":
+            capability["legacy_status"] = capability["status"]
+            capability["status"] = "migration-required"
+            if limitation not in capability["limitations"]:
+                capability["limitations"].insert(0, limitation)
+    path.write_text(json.dumps(document, indent=2) + "\n")
+
+
+def update_legacy_oracle_assertions() -> None:
+    path = ROOT / "crates/platform/src/lib.rs"
+    source = path.read_text()
+    old = "assert!((score - 8.0).abs() < 1e-9);"
+    if old not in source:
+        raise RuntimeError("expected root truth-score assertion was not found")
+    path.write_text(source.replace(old, "assert!(score.abs() < 1e-9);", 1))
+
+    path = ROOT / "crates/platform/tests/mcp_stdio.rs"
+    source = path.read_text()
+    if '\\"truthScore\\":8.00' not in source:
+        raise RuntimeError("expected MCP truth-score fixture was not found")
+    source = source.replace('\\"truthScore\\":8.00', '\\"truthScore\\":0.00', 1)
+    source = source.replace(
+        "M1 design kernel and desktop shell accepted",
+        "Java 25 Swing migration in progress; Rust M1 retained as conformance oracle",
+        1,
+    )
+    path.write_text(source)
+
+    path = ROOT / "crates/platform/src/bin/icstudio-mcp.rs"
+    source = path.read_text()
+    old_claim = "M1 design kernel and desktop shell accepted"
+    if old_claim not in source:
+        raise RuntimeError("expected MCP status claim was not found")
+    path.write_text(
+        source.replace(
+            old_claim,
+            "Java 25 Swing migration in progress; Rust M1 retained as conformance oracle",
+            1,
+        )
+    )
+
+
+def create_j0_workpack() -> None:
+    path = ROOT / ".project/workpacks/WP-0006.yaml"
+    if path.exists():
+        raise RuntimeError("WP-0006 already exists")
+    path.write_text(
+        """id: WP-0006
+title: Java J0 reproducible factory
+status: planned
+priority: critical
+milestone: J0
+parent: WP-0005
+spec: .project/decisions/ADR-0001-java25-swing-pivot.toml
+branch: milestone/m0-reproducible-factory
+acceptance:
+  - Temurin 25.0.4+7 reference toolchain
+  - Maven 3.9.16 wrapper reactor
+  - JUnit 6.1.2 smoke tests
+  - Windows macOS Linux native CI
+  - reproducible non-root Linux Java image
+  - Java dependency licence evidence
+  - CycloneDX 2.9.3 SBOM
+  - checkpoint CP-JAVA-M0-FACTORY
+truth_on_acceptance: 2.0
+m2_blocked: true
+"""
+    )
+
+
+def main() -> None:
+    replace_constitution_sections()
+    accept_adr()
+    reset_truth()
+    reset_capabilities()
+    update_legacy_oracle_assertions()
+    create_j0_workpack()
+
+
+if __name__ == "__main__":
+    main()
