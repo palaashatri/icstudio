@@ -445,7 +445,7 @@ mod tests {
     #[test]
     fn truth_score_is_deliberately_conservative() {
         let score = truth_score(&repository_root()).expect("truth score");
-        assert!((score - 8.0).abs() < 1e-9);
+        assert!(score.abs() < 1e-9);
     }
 
     #[test]

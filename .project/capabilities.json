@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "programme": "ICStudio 1.0",
-  "accepted_commit": "937f0f4940a3197b81b6553d127c6d8d4f0f537b",
+  "accepted_commit": "",
   "capabilities": [
     {
       "id": "CAP-INFRA-BOOT",
       "name": "Reproducible build and CI",
-      "status": "accepted",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M0",
       "evidence": [
@@ -18,12 +18,15 @@
         "apps/workbench/package-lock.json lockfile version 3",
         "locked npm ci validation and workbench SPDX evidence in GitHub Actions run 30795833188"
       ],
-      "limitations": []
+      "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance"
+      ],
+      "legacy_status": "accepted"
     },
     {
       "id": "CAP-PROJ-DB",
       "name": "Project/library/cell/view database",
-      "status": "accepted",
+      "status": "migration-required",
       "tier": 1,
       "milestone": "M1",
       "evidence": [
@@ -38,16 +41,18 @@
         "GitHub Actions run 30795833188"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Metadata hierarchy only",
         "No schematic or layout object payloads",
         "No content-addressed large-object store",
         "No migrations beyond schema version 1"
-      ]
+      ],
+      "legacy_status": "accepted"
     },
     {
       "id": "CAP-TXN",
       "name": "Transactions, undo, and crash recovery",
-      "status": "candidate",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M1",
       "evidence": [
@@ -58,16 +63,18 @@
         "stale transaction rejection test"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Add-only mutations",
         "No undo or redo stack",
         "No transaction event stream",
         "No concurrent writer lock"
-      ]
+      ],
+      "legacy_status": "candidate"
     },
     {
       "id": "CAP-RPC",
       "name": "Typed worker protocol",
-      "status": "accepted",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M1",
       "evidence": [
@@ -78,17 +85,19 @@
         "worker crash isolation test"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Line-oriented bootstrap transport",
         "Only ping and crash-test commands",
         "No cancellation",
         "No shared-memory payload channel",
         "No production supervisor"
-      ]
+      ],
+      "legacy_status": "accepted"
     },
     {
       "id": "CAP-MCP-BASE",
       "name": "MCP lifecycle and discovery",
-      "status": "accepted",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M0",
       "evidence": [
@@ -97,15 +106,17 @@
         "GitHub Actions run 30774870611: stdio MCP tests passed on Ubuntu macOS and Windows"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Read-only stdio surface",
         "Minimal bootstrap JSON decoder",
         "No HTTP transport"
-      ]
+      ],
+      "legacy_status": "accepted"
     },
     {
       "id": "CAP-MCP-READ",
       "name": "Revisioned engineering resources",
-      "status": "accepted",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M1",
       "evidence": [
@@ -117,11 +128,13 @@
         "GitHub Actions run 30795833188 on Ubuntu macOS and Windows"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Hierarchy summary only",
         "No bounded object traversal",
         "No geometry or netlist resources",
         "Requires local ICSTUDIO_ACTIVE_PROJECT configuration"
-      ]
+      ],
+      "legacy_status": "accepted"
     },
     {
       "id": "CAP-MCP-MUTATE",
@@ -159,7 +172,7 @@
     {
       "id": "CAP-PDK-BASE",
       "name": "Technology and PDK runtime",
-      "status": "candidate",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M1",
       "evidence": [
@@ -171,12 +184,14 @@
         "GitHub Actions run 30776034205"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Metadata foundation only",
         "No PCell execution",
         "No rule-deck runtime",
         "No compact-model evaluation",
         "No foundry qualification"
-      ]
+      ],
+      "legacy_status": "candidate"
     },
     {
       "id": "CAP-SCH-EDIT",
@@ -192,7 +207,7 @@
     {
       "id": "CAP-CONNECT",
       "name": "Connectivity and ERC foundation",
-      "status": "candidate",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M2",
       "evidence": [
@@ -203,12 +218,14 @@
         "GitHub Actions run 30776034205"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Structural IR only",
         "No schematic connectivity extraction",
         "No hierarchical parameter semantics",
         "No ERC",
         "No electrical device models"
-      ]
+      ],
+      "legacy_status": "candidate"
     },
     {
       "id": "CAP-LAY-EDIT",
@@ -224,7 +241,7 @@
     {
       "id": "CAP-GEO-KERNEL",
       "name": "Exact integer geometry",
-      "status": "candidate",
+      "status": "migration-required",
       "tier": 1,
       "milestone": "M1",
       "evidence": [
@@ -235,15 +252,17 @@
         "one-million-shape release baseline in GitHub Actions run 30774870611"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Rectangles only",
         "No polygons paths transforms hierarchy topology or Boolean operations",
         "Reference min-X index is not a production R-tree"
-      ]
+      ],
+      "legacy_status": "candidate"
     },
     {
       "id": "CAP-IO-GDS",
       "name": "GDSII import and export",
-      "status": "candidate",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M3",
       "evidence": [
@@ -253,11 +272,13 @@
         "GitHub Actions run 30776034205"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Record framing only",
         "No hierarchy or geometry interpretation",
         "No import into project state",
         "No export"
-      ]
+      ],
+      "legacy_status": "candidate"
     },
     {
       "id": "CAP-IO-OASIS",
@@ -284,7 +305,7 @@
     {
       "id": "CAP-WAVE",
       "name": "Waveform and result platform",
-      "status": "candidate",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M2",
       "evidence": [
@@ -295,10 +316,12 @@
         "GitHub Actions run 30776034205"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Local scalar vectors only",
         "No streaming compression plotting or complex data",
         "No solver integration"
-      ]
+      ],
+      "legacy_status": "candidate"
     },
     {
       "id": "CAP-SIM-OP",
@@ -567,18 +590,23 @@
     {
       "id": "CAP-RELEASE",
       "name": "Signed cross-platform release",
-      "status": "candidate",
+      "status": "migration-required",
       "tier": 0,
       "milestone": "M0",
       "evidence": [
         ".github/workflows/release-builds.yml"
       ],
       "limitations": [
+        "Existing implementation evidence is historical Rust/Electron oracle evidence and does not count as current Java capability acceptance",
         "Native target matrix is defined but has not been exercised by a version tag",
         "CLI MCP and worker binaries only",
         "No desktop application installers",
         "No signing or notarization"
-      ]
+      ],
+      "legacy_status": "candidate"
     }
-  ]
+  ],
+  "historical_accepted_commit": "937f0f4940a3197b81b6553d127c6d8d4f0f537b",
+  "active_architecture": "Java 25 + Swing migration (ADR-0001)",
+  "migration_oracle_checkpoint": "CP-M1-KERNEL"
 }

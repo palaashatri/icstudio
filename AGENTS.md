@@ -189,65 +189,80 @@ MIT licensing is a distribution policy, not a waiver of clean-room, export-contr
 
 # 5. High-level architecture
 
+ICStudio is a **Java 25 application end to end**. Swing is the desktop substrate; the UI and engineering core share one authoritative in-process Java object model. Module boundaries exist for maintainability, testing, and deliberate fault containment, not to recreate a frontend/backend web architecture.
+
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ Desktop Workbench and AI Clients                                            │
-│ Electron + React/TypeScript shell | CLI | Python/Rust SDKs | MCP hosts        │
-│ WebGPU scene engines: schematic, layout, waveform, mesh, field visualization │
+│ ICStudio Desktop, Headless, and AI Surfaces                                 │
+│ Swing + Studio* design system | Skija/Skia canvases | CLI | SDK | MCP      │
 └───────────────────────────────┬──────────────────────────────────────────────┘
-                                │ typed local RPC / MCP / shared-memory channels
+                                │ typed in-process Java query/command APIs
 ┌───────────────────────────────▼──────────────────────────────────────────────┐
-│ Rust Platform Services                                                      │
-│ project/session manager, commands, transactions, undo, jobs, results,       │
-│ experiment orchestration, plugin sandbox, provenance, collaboration hooks    │
+│ Authoritative Java 25 Domain Services                                       │
+│ project/session | commands/transactions | geometry/connectivity | PDK        │
+│ netlist/result IR | experiments | jobs | provenance | permission policy      │
 └───────────────┬──────────────────────┬───────────────────────┬───────────────┘
                 │                      │                       │
 ┌───────────────▼────────────┐ ┌───────▼──────────────┐ ┌──────▼──────────────┐
-│ Design and Geometry Kernel │ │ Simulation IR        │ │ Verification IR      │
-│ Rust/C++                   │ │ Rust/C++             │ │ Rust/C++             │
-│ hierarchy, topology, DBU,  │ │ devices, equations,  │ │ layers, rules, nets, │
+│ Design/Geometry Domain     │ │ Simulation IR        │ │ Verification IR      │
+│ Java 25                    │ │ Java 25              │ │ Java 25              │
+│ DBU, hierarchy, topology,  │ │ devices, equations,  │ │ layers, rules, nets, │
 │ spatial index, formats     │ │ analyses, results    │ │ markers, extraction  │
 └───────────────┬────────────┘ └────────┬─────────────┘ └────────┬─────────────┘
                 │                       │                         │
 ┌───────────────▼───────────────────────▼─────────────────────────▼────────────┐
-│ Isolated Solver Workers                                                     │
+│ Isolated Java Worker JVMs                                                   │
 │ SPICE | FastSPICE | RF | Digital | AMS | DRC | LVS | PEX | EM | EMIR |      │
-│ Thermal | Reliability | Photonics | Optimization                            │
+│ Thermal | Reliability | Photonics | Optimization | plugins | hostile import │
 └───────────────────────────────┬──────────────────────────────────────────────┘
-                                │
+                                │ Java FFM / versioned worker protocols
 ┌───────────────────────────────▼──────────────────────────────────────────────┐
-│ PDK, Models, Rule Decks, Standards, and External Adapters                    │
-│ Native open PDK runtime + optional OpenAccess/commercial/open-tool adapters  │
+│ Mature Native Libraries, PDKs, Models, Standards, and External Oracles      │
+│ permissive C/C++ libraries through FFM | separate-process reciprocal tools   │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 5.1 Process isolation
 
-Solvers, PDK code, file importers, and user plugins run outside the desktop process. A crash, malformed model, runaway simulation, or malicious plugin must not corrupt the project database or terminate the workbench.
+One language does not mean one process. Simulation, DRC, LVS, PEX, EM, thermal, reliability, photonics, optimization, untrusted PDK execution, plugins, and hostile file import may run in isolated Java worker JVMs. A crash, malformed model, runaway job, or malicious extension must not corrupt authoritative project state or terminate the workbench.
 
 ## 5.2 Authoritative state
 
-The platform service owns authoritative project state. UI components receive immutable snapshots and submit commands. UI state must never become the only copy of engineering data.
+Java domain services own authoritative project state. Swing components, CLI commands, SDK calls, and MCP adapters consume the same typed Java query and command interfaces. UI objects may own presentation state such as selection, zoom, window placement, and transient editing affordances, but they must never become the only copy of engineering state.
 
-## 5.3 Communication
+Ordinary desktop interaction is in-process. ICStudio MUST NOT serialize state through JSON, HTTP, REST, subprocess IPC, or a local web server merely to move data between its UI and engineering core.
 
-- Control messages use a versioned schema through local RPC.
-- MCP is an adapter over the same command and query services; it is never a second implementation of engineering semantics.
-- Large geometry, matrix, and waveform payloads use shared memory, memory-mapped files, chunked binary streams, or MCP resource links rather than oversized JSON responses.
-- Every RPC or mutating MCP request carries project ID, expected revision ID, request ID or idempotency key, tool version, actor identity, and cancellation token where supported.
-- Long operations emit progress, structured diagnostics, deterministic artifacts, and cancellable job handles.
+## 5.3 Communication and native interoperability
+
+- In-process desktop control uses typed Java interfaces and immutable value objects.
+- Worker-process control uses versioned schemas carrying project ID, expected revision, request/idempotency identity, actor, tool version, cancellation state, and structured diagnostics.
+- Large geometry, matrix, mesh, and waveform payloads use memory-mapped files, shared memory where safe, or chunked binary streams rather than oversized JSON.
+- The **Foreign Function and Memory API (FFM)** is the preferred Java/native boundary for mature permissively licensed C/C++ numerical, geometry, and interoperability libraries.
+- JNI is fallback-only for new project-owned bindings and requires an architecture decision explaining why FFM is insufficient.
+- GPL/reciprocal tools remain external processes or differential-test oracles unless an explicit legal and architectural review approves another relationship.
 
 ## 5.4 MCP architectural boundary
 
-The ICStudio MCP server is a separately runnable, least-privilege gateway over platform services.
+The ICStudio MCP server is implemented in Java and delegates to the same query/command services used by Swing and CLI. It may run as a separate least-privilege process for host integration, but it MUST NOT duplicate engineering semantics or independently parse/modify authoritative project files.
 
 - Local integrations use `stdio` by default.
 - Remote integrations use Streamable HTTP only when explicitly enabled.
-- Protocol revision negotiation is mandatory. The initial locked baseline is MCP `2025-11-25`; the selected revision is recorded in `toolchains/mcp.lock` and upgraded only through conformance tests and an ADR.
-- MCP tools invoke typed commands; resources expose bounded, redacted, revision-addressed engineering context; prompts package recommended workflows.
-- The MCP server must not parse or modify authoritative project files directly.
-- The desktop application, CLI, SDKs, and MCP server must produce identical command manifests for equivalent operations.
-- An MCP implementation failure must not corrupt the project or bypass transaction, permission, provenance, or capability checks.
+- Protocol revision negotiation is mandatory. The initial locked baseline remains MCP `2025-11-25` until changed through conformance tests and an ADR.
+- MCP tools invoke typed commands; resources expose bounded, redacted, revision-addressed context; prompts package recommended workflows.
+- Equivalent desktop, CLI, SDK, and MCP operations must resolve to equivalent command manifests and project revisions.
+
+## 5.5 Workbench and product-design requirements
+
+The desktop experience is professional, comfortable, and informed by Apple Human Interface Guidelines without pixel-cloning an Apple product or violating platform conventions.
+
+- **Approachable by default, powerful on demand.** Advanced parameters use progressive disclosure rather than permanent visual noise.
+- **One product, not beginner/expert modes.** Power emerges through expansion, customization, commands, shortcuts, scripting, and saved workspaces.
+- **Studio-owned components.** Application screens use reusable `Studio*` controls and semantic design tokens; raw look-and-feel keys do not become screen-level APIs.
+- **Flexible workspaces.** Dock, split, tab, float, collapse, resize, save, restore, and keyboard navigation are first-class.
+- **Engineering surfaces use Skija/Skia.** Schematic, layout, waveform, mesh, and field canvases are custom rendering surfaces rather than enormous Swing component trees.
+- **Semantic materials.** Themes request roles such as solid, sidebar, toolbar, inspector, popover, menu, HUD, and canvas. macOS may map these to AppKit visual-effect materials through FFM; Windows may map them to supported composition materials; Linux uses compositor-aware blur/translucency when available with deterministic fallbacks.
+- **Legibility wins over glass.** Schematic, layout, waveform, console, and dense-data surfaces default to controlled solid backgrounds even when surrounding chrome uses transparency or blur.
+- **Accessibility is mandatory.** Respect platform reduce-motion/reduce-transparency preferences where available, provide a fully opaque high-contrast path, preserve visible keyboard focus, and maintain usable keyboard-only workflows.
 
 ---
 
@@ -255,117 +270,57 @@ The ICStudio MCP server is a separately runnable, least-privilege gateway over p
 
 ```text
 /
-├── AGENTS.md                     # This file; normative
-├── README.md                     # Public introduction only
+├── AGENTS.md
+├── README.md
 ├── LICENSE
 ├── SECURITY.md
-├── justfile                      # Canonical developer commands
-├── toolchains/                   # Locked toolchain manifests
-├── schemas/                      # Versioned RPC, file, result, and status schemas
-├── apps/
-│   ├── studio/                   # Electron/React desktop workbench
-│   ├── cli/                      # Stable headless CLI (`icstudio`)
-│   ├── mcp/                      # Local/remote Model Context Protocol server
-│   └── server/                   # Optional remote job coordinator
-├── crates/
-│   ├── project/                  # project, library, cell, view model
-│   ├── command/                  # transaction and undo framework
-│   ├── geometry/                 # integer geometry and topology
-│   ├── connectivity/             # electrical and physical connectivity
-│   ├── scene/                    # renderer-independent scene model
-│   ├── pdk/                      # PDK runtime and package manager
-│   ├── netlist-ir/               # simulator-neutral netlist IR
-│   ├── result-db/                # waveform and multidimensional result store
-│   ├── experiment/               # ADE-style orchestration
-│   ├── rpc/                      # typed internal protocol implementation
-│   ├── mcp-gateway/              # MCP resources/tools/prompts and policy mapping
-│   ├── ai-patch/                 # revision-safe semantic design patch format
-│   ├── plugin-host/              # sandbox and extension APIs
-│   └── provenance/               # manifests, hashes, reproducibility
-├── cpp/
-│   ├── numeric/                  # sparse, nonlinear, PDE, meshing kernels
-│   ├── geometry/                 # kernels requiring C++ ecosystem integration
-│   └── openaccess-adapter/       # optional; separately built and licensed
-├── engines/
-│   ├── spice/
-│   ├── fastspice/
-│   ├── rf/
-│   ├── digital/
-│   ├── ams/
-│   ├── drc/
-│   ├── erc/
-│   ├── lvs/
-│   ├── pex/
-│   ├── em/
-│   ├── emir/
-│   ├── thermal/
-│   ├── reliability/
-│   ├── photonics/
-│   └── optimize/
-├── adapters/
-│   ├── ngspice/
-│   ├── xyce/
-│   ├── klayout/
-│   ├── magic/
-│   ├── netgen/
-│   ├── openroad/
-│   └── commercial/               # interface stubs; no proprietary content
-├── formats/
-│   ├── gdsii/
-│   ├── oasis/
-│   ├── lefdef/
-│   ├── spice/
-│   ├── verilog/
-│   ├── touchstone/
-│   ├── vcd/
-│   └── sdf/
-├── pdk/
-│   ├── sdk/
-│   ├── examples/
-│   └── validators/
+├── pom.xml                        # Java 25 Maven reactor
+├── mvnw / mvnw.cmd               # Maven 3.9.16 wrapper
+├── .mvn/wrapper/
+├── justfile                      # Canonical human/agent entry points
+├── toolchains/                   # Locked protocol/toolchain manifests
+├── schemas/                      # Language-neutral project/RPC/result schemas
+├── java/
+│   ├── icstudio-core/            # IDs, revisions, errors, immutable values
+│   ├── icstudio-project/         # project/library/cell/view and persistence
+│   ├── icstudio-command/         # transactions, history, journaling, recovery
+│   ├── icstudio-geometry/        # exact integer geometry and indexing
+│   ├── icstudio-connectivity/    # electrical/physical connectivity
+│   ├── icstudio-pdk/             # PDK runtime/package model
+│   ├── icstudio-netlist-ir/      # simulator-neutral netlist IR
+│   ├── icstudio-result-db/       # waveform/result storage
+│   ├── icstudio-experiment/      # ADE-style orchestration
+│   ├── icstudio-platform/        # platform integration and FFM adapters
+│   ├── icstudio-worker/          # isolated worker protocol/runtime
+│   ├── icstudio-cli/             # stable headless CLI
+│   ├── icstudio-mcp/             # MCP gateway over shared services
+│   ├── icstudio-ui/              # Swing Studio* design system and Skia hosts
+│   ├── icstudio-app/             # desktop application assembly/entry point
+│   └── icstudio-conformance/     # differential and cross-surface tests
+├── native/
+│   ├── numeric/                  # optional project-owned native kernels/adapters
+│   ├── geometry/
+│   └── openaccess-adapter/       # optional; separately built/licensed
+├── engines/                      # solver modules/workers by capability
+├── adapters/                     # external/open-tool interoperability
+├── formats/                      # public format fixtures/specification material
+├── pdk/                          # SDK, examples, validators
 ├── benchmarks/
-│   ├── analytic/
-│   ├── circuits/
-│   ├── physical/
-│   ├── extraction/
-│   ├── rf/
-│   ├── digital/
-│   ├── ams/
-│   ├── em/
-│   ├── thermal/
-│   └── full-flows/
 ├── corpus/
-│   ├── fuzz-seeds/
-│   ├── regressions/
-│   └── expected/
-├── research/                     # non-production experiments
+├── research/
 ├── examples/
-│   ├── mcp/                      # host configurations and agent workflows
-│   └── teaching/                 # reproducible custom-IC modules
 ├── tests/
-│   ├── conformance/
-│   ├── differential/
-│   ├── metamorphic/
-│   ├── performance/
-│   ├── visual/
-│   ├── recovery/
-│   ├── mcp-conformance/
-│   ├── mcp-adversarial/
-│   └── security/
 ├── ops/
-│   ├── runners/
-│   ├── scheduler/
-│   ├── images/
-│   ├── dashboards/
-│   └── checkpoint/
 └── .project/
-    ├── capabilities.json         # current accepted capability graph
-    ├── milestones/               # machine-readable milestone state
-    ├── workpacks/                # one YAML file per work package
-    ├── decisions/                # TOML architecture decisions
-    ├── baselines/                # accepted benchmark baselines
-    └── checkpoints/              # immutable pause/resume manifests
+    ├── capabilities.json
+    ├── milestones/
+    ├── workpacks/
+    ├── decisions/
+    ├── baselines/
+    └── checkpoints/
 ```
+
+During ADR-0001 migration, the existing Rust crates and Electron/React workbench remain temporarily in their current paths as a **historical conformance oracle only**. They receive no new product capability work and are removed only after `CP-JAVA-M1-KERNEL` is accepted. Language-neutral schemas, test corpora, and historical checkpoints are retained.
 
 The project MUST NOT accumulate miscellaneous planning Markdown files. Engineering state belongs in this file or in structured files under `.project/`.
 
@@ -375,17 +330,28 @@ The project MUST NOT accumulate miscellaneous planning Markdown files. Engineeri
 
 ## 7.1 Languages
 
-- **Rust stable, edition 2024:** platform services, safe kernels, formats, orchestration, plugins, CLI, and MCP gateway.
-- **C++23:** numerical kernels and interoperability where mature C/C++ ecosystems are necessary.
-- **TypeScript:** desktop workbench and UI state.
-- **WGSL:** WebGPU rendering and compute shaders.
-- **Python 3.12+:** research, model generation, golden references, corpus generation, and user automation—not authoritative core state.
-- **CUDA/HIP:** optional acceleration. Every GPU kernel requires a CPU reference path.
-- **WASM:** preferred sandbox target for portable user plugins and deterministic PCells.
+- **Java 25:** authoritative language for the desktop, project model, commands, geometry, connectivity, PDK runtime, formats, orchestration, CLI, MCP, solver orchestration, and project-owned reference solvers.
+- **C/C++23:** permitted behind Java FFM for mature ecosystem integration or kernels with demonstrated technical need. New native project-owned code requires a Java reference or conformance path where practical.
+- **Python 3.12+:** research, model generation, golden references, corpus generation, teaching, and user automation; never authoritative project state.
+- **CUDA/HIP and other accelerator languages:** optional acceleration behind tested CPU/reference behaviour.
+- **WASM:** preferred portable sandbox target where deterministic PCells/plugins benefit from it.
+- **Rust and TypeScript:** migration-only legacy implementation languages under ADR-0001. No new product capability is implemented in the old Rust/Electron stack after the architecture switch.
 
-## 7.2 Build tools
+## 7.2 Java and build baseline
 
-Canonical developer entry points are exposed through `just`:
+The migration baseline is:
+
+- Eclipse Temurin **25.0.4+7** for CI/reference JDK distribution;
+- Java language/API target **25**;
+- Apache Maven **3.9.16** through the Maven Wrapper;
+- JUnit **6.1.2** for Java tests;
+- FlatLaf **3.7.2** as optional Swing look-and-feel plumbing, never as the product design system;
+- Skija/Skia **0.143.17** for engineering-canvas rendering;
+- CycloneDX Maven Plugin **2.9.3** for Java dependency SBOM evidence.
+
+Maven 4 preview/RC builds are not production build dependencies until a later ADR adopts a GA release.
+
+Canonical developer entry points remain exposed through `just` so humans and agents do not need to know the underlying build topology:
 
 ```bash
 just bootstrap
@@ -401,24 +367,36 @@ just resume-check
 
 Internally:
 
-- Cargo manages Rust.
-- CMake + Ninja manage C++.
-- `pnpm` manages TypeScript.
-- `uv` manages Python environments.
-- `sccache` is mandatory on shared runners.
+- Maven Wrapper manages the authoritative Java reactor.
+- CMake + Ninja manage optional project-owned C/C++ code.
+- `uv` manages Python research/automation environments.
 - OCI containers provide reproducible CI images.
+- Java dependency resolution is locked by explicit versions, repository policy, SBOM, licence evidence, and reproducibility checks.
+- `just` may invoke the legacy Cargo/npm gates only while they remain required as migration-oracle evidence.
 
 Agents MUST call canonical `just` targets rather than inventing undocumented build commands.
 
 ## 7.3 Supported platforms
 
-Production targets:
+Production desktop targets are:
 
-- Windows 11 x86-64 and ARM64 where feasible;
-- macOS current and previous major release, Apple Silicon first;
+- Windows 11 x86-64; ARM64 becomes mandatory when the chosen JDK/native dependency set is supportable without emulation-only product claims;
+- macOS current and previous major release, Apple Silicon first, Intel while dependencies remain supportable;
 - Linux x86-64, with Ubuntu LTS and Fedora as reference distributions.
 
-Headless solver workers must support Linux first. Desktop parity may trail by one milestone but must not require a Linux VM for normal use.
+Headless workers support Linux first when a capability requires platform-specific acceleration, but ordinary desktop use MUST NOT require a Linux VM.
+
+## 7.4 ADR-0001 migration gate
+
+The accepted Rust/Electron `CP-M1-KERNEL` checkpoint is historical evidence, not current implementation credit after this architecture switch.
+
+Migration proceeds in three gates:
+
+1. **J0 — Java factory:** Java 25/Maven builds, tests, licence/SBOM evidence, checkpoints, and Windows/macOS/Linux/container CI are accepted. Live truth becomes **2/100**.
+2. **J1 — Java M1 parity:** Java reproduces the M1 project, recovery, geometry, worker, PDK/netlist/result, CLI/MCP, Swing shell, Skia scene, and cross-surface equivalence contracts. Live truth becomes **8/100** and `CP-JAVA-M1-KERNEL` is created.
+3. **J2 — Legacy retirement:** old production Rust/Electron/Node application code is removed after J1 evidence is archived. Removing superseded code does not itself increase truth score.
+
+Immediately after this architecture switch, live truth is **0/100**. The previous 8/100 remains preserved in `CP-M1-KERNEL` and historical evidence. No M2 schematic/simulation implementation may begin before J1 is accepted.
 
 ---
 

@@ -2,15 +2,15 @@
   "schema_version": 1,
   "final_target": "ICStudio 1.0 as defined by AGENTS.md M8",
   "score_formula": "sum(milestone.weight * milestone.completion)",
-  "reported_score": 8.0,
-  "assessment": "M0 and M1 are accepted. M1 completed the design-kernel and headless-skeleton contract with an Electron and React desktop shell, a WebGPU scene prototype, a least-privilege Rust UI bridge, and automated proof that CLI, UI, and MCP expose the same authoritative project state and revision. GitHub Actions run 30795833188 validated the locked npm graph, strict Rust and TypeScript builds, UI security tests, parser and recovery tests, the one-million-shape baseline, licence policy, dual SPDX evidence, and the pinned non-root Linux container on Ubuntu, macOS, and Windows. M2 and all design-editor and solver capabilities remain unstarted.",
+  "reported_score": 0.0,
+  "assessment": "ADR-0001 changed the authoritative implementation stack to Java 25 + Swing. The prior Rust/Electron M0/M1 implementation remains preserved as CP-M1-KERNEL and a conformance oracle, but contributes no live implementation credit. J0 must re-establish the Java factory before M0 returns to 2/100; J1 must reproduce M1 before the score returns to 8/100. M2 is blocked until CP-JAVA-M1-KERNEL is accepted.",
   "milestones": [
     {
       "id": "M0",
       "name": "Constitution and reproducible factory",
       "weight": 2.0,
-      "completion": 1.0,
-      "status": "accepted",
+      "completion": 0.0,
+      "status": "migration-required",
       "evidence": [
         "GitHub Actions run 30773006326",
         "Ubuntu factory gate passed",
@@ -28,8 +28,8 @@
       "id": "M1",
       "name": "Design kernel and headless skeleton",
       "weight": 6.0,
-      "completion": 1.0,
-      "status": "accepted",
+      "completion": 0.0,
+      "status": "migration-required",
       "evidence": [
         "GitHub Actions run 30775698631 hardened project RPC MCP and evidence foundations on Ubuntu macOS Windows and the pinned non-root container",
         "GitHub Actions run 30776034205 validated eight dependency-free workspace crates on Ubuntu macOS Windows and the pinned non-root container",
@@ -108,6 +108,7 @@
     }
   ],
   "known_risks": [
+    "Authoritative Java 25/Swing migration is in progress; historical Rust/Electron evidence does not count toward live truth",
     "The MCP gateway uses a bounded bootstrap JSON parser rather than a complete schema-generated implementation",
     "The release-build workflow defines native targets but has not yet been exercised by a version tag",
     "The reference spatial index is not a production R-tree or hierarchical layout index",
@@ -117,5 +118,12 @@
     "SPICE and GDSII support is structural parser scaffolding rather than full interoperability",
     "The result database stores bounded scalar vectors without streaming compression plotting or solver integration",
     "No schematic editor layout editor simulator verification extraction EM thermal photonic optimization or tapeout capability exists"
-  ]
+  ],
+  "historical_baseline": {
+    "checkpoint": "CP-M1-KERNEL",
+    "score": 8.0,
+    "architecture": "Rust + Electron/React M1",
+    "credit": "historical-only"
+  },
+  "active_architecture": "Java 25 + Swing migration (ADR-0001)"
 }

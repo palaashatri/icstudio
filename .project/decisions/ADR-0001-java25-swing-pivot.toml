@@ -1,7 +1,8 @@
 id = "ADR-0001"
 title = "Pivot ICStudio to an authoritative Java 25 and Swing architecture"
-status = "proposed"
+status = "accepted"
 date = "2026-08-30"
+approved_by = "user"
 branch = "milestone/m0-reproducible-factory"
 supersedes_architecture = "Electron + React/TypeScript desktop over Rust platform services"
 
@@ -149,5 +150,5 @@ items = [
 ]
 
 [acceptance]
-requires_user_review = true
-next_after_acceptance = "Amend AGENTS.md architecture/repository/toolchain sections, create the detailed implementation plan, reset live truth per migration.truth_policy, then execute J0 and J1 test-first on the same implementation branch."
+requires_user_review = false
+next_after_acceptance = "Execute WP-0005 test-first on the same implementation branch; M2 remains blocked until CP-JAVA-M1-KERNEL."
