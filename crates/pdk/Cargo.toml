@@ -1,0 +1,13 @@
+[package]
+name = "icstudio-pdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Deterministic technology and PDK metadata model for ICStudio"
+
+[lib]
+name = "icstudio_pdk"
+path = "src/lib.rs"

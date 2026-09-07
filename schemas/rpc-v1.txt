@@ -1,0 +1,22 @@
+ICStudio isolated-worker control protocol, version 1
+
+Transport: one UTF-8 envelope per line over a process-local byte stream.
+Field encoding: tab separated with backslash, tab, LF, and CR escaped as \\, \t, \n, and \r.
+
+Request grammar:
+request<TAB>1<TAB>REQUEST_ID<TAB>PROJECT_ID<TAB>EXPECTED_REVISION<TAB>COMMAND<TAB>PAYLOAD
+
+Response grammar:
+response<TAB>1<TAB>REQUEST_ID<TAB>ok|error<TAB>PAYLOAD
+
+Required invariants:
+- request ID is non-empty and correlates exactly one response;
+- project ID identifies the authoritative project context;
+- expected revision is carried on every request;
+- unsupported protocol versions are rejected;
+- malformed envelopes never mutate project state;
+- worker process failure is isolated from the platform and project database.
+
+M1 commands:
+- worker.ping: deterministic health response;
+- worker.crash: test-only deliberate process abort used to prove isolation.

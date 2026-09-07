@@ -1,0 +1,13 @@
+[package]
+name = "icstudio-geometry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Exact signed-integer geometry primitives and spatial indexing for ICStudio"
+
+[lib]
+name = "icstudio_geometry"
+path = "src/lib.rs"

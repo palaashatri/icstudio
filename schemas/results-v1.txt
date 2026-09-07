@@ -1,0 +1,20 @@
+ICStudio result database format, version 1
+
+Scope: deterministic run provenance and bounded scalar signal vectors.
+Non-scope: streaming, compression, complex vectors, multidimensional sweeps, plotting, solver execution, and long-term archival compatibility.
+Encoding: UTF-8 text with LF line endings and tab-separated escaped fields.
+Floating-point encoding: exact IEEE-754 binary64 bit patterns as 16 lowercase hexadecimal digits.
+Ordering: run record, signals ordered by name, samples in axis order.
+
+Grammar:
+ICSTUDIO_RESULTS<TAB>1
+run<TAB>RUN_ID<TAB>PROJECT_ID<TAB>PROJECT_REVISION<TAB>ANALYSIS<TAB>INPUT_HASH<TAB>SOLVER<TAB>SOLVER_VERSION
+signal<TAB>NAME<TAB>UNIT<TAB>SAMPLE_COUNT
+sample<TAB>AXIS_BITS<TAB>VALUE_BITS
+
+Invariants:
+- signal names are unique;
+- axis and value lengths match;
+- axes are monotonically nondecreasing;
+- each signal contains at most 10,000,000 samples in the M1 implementation;
+- provenance fields are mandatory.

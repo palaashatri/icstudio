@@ -1,0 +1,573 @@
+id: WP-0005
+title: Java 25 Swing authoritative-stack migration
+status: planned
+priority: critical
+milestone: migration-J0-J1-J2
+owner: implementation-agent
+reviewer: independent-ci
+qa_owner: independent-ci
+spec: .project/decisions/ADR-0001-java25-swing-pivot.toml
+branch: milestone/m0-reproducible-factory
+
+goal: >-
+  Replace the Electron/React + Rust application architecture with one authoritative
+  Java 25 application model using Swing, an ICStudio-owned design system, Skija/Skia
+  engineering canvases, Java FFM native adapters, and isolated Java worker JVMs,
+  while preserving CP-M1-KERNEL behaviour through differential conformance tests.
+
+architecture:
+  authoritative_language: Java 25
+  desktop: Swing
+  design_system: ICStudio Studio* components with semantic tokens/materials
+  engineering_rendering: Skija/Skia 0.143.17
+  native_interop: JDK Foreign Function and Memory API
+  build: Maven 3.9.16 multi-module project via Maven Wrapper
+  runtime_distribution: Eclipse Temurin 25.0.4+7
+  tests: JUnit 6.1.2
+  laf_bootstrap: FlatLaf 3.7.2
+  sbom: CycloneDX Maven Plugin 2.9.3
+  process_isolation: separate Java worker JVMs for solvers/plugins/hostile importers
+
+constraints:
+  - All implementation remains on milestone/m0-reproducible-factory.
+  - Do not start M2 until Java J1 reaches CP-M1-KERNEL parity and is accepted.
+  - Do not delete the accepted Rust/Electron implementation before J1 parity is archived.
+  - Do not count Rust/Electron capability evidence as current Java implementation truth.
+  - Project-owned code remains MIT.
+  - Java UI calls typed Java domain APIs in-process; no REST/HTTP/frontend-backend layer.
+  - Worker process boundaries remain versioned and crash-isolated.
+  - Signed 64-bit integer DBU geometry and stable 128-bit IDs remain normative.
+  - MCP remains an adapter over the same Java command/query services as Swing and CLI.
+  - Engineering canvases default to controlled solid surfaces even when chrome uses blur/materials.
+  - macOS, Windows, and Linux remain production desktop targets.
+
+truth_policy:
+  pre_switch_historical_score: 8.0
+  after_architecture_switch: 0.0
+  after_J0_acceptance: 2.0
+  after_J1_acceptance: 8.0
+  J2_removal_does_not_change_score: true
+
+file_map:
+  root:
+    - AGENTS.md: authoritative architecture/toolchain/migration contract
+    - pom.xml: root Maven reactor and dependency/plugin management
+    - mvnw: Unix Maven wrapper launcher
+    - mvnw.cmd: Windows Maven wrapper launcher
+    - .mvn/wrapper/maven-wrapper.properties: Maven 3.9.16 distribution pin
+    - .mvn/wrapper/maven-wrapper.jar: Apache Maven Wrapper bootstrap
+    - justfile: canonical commands dispatching Java build/test/run during migration
+    - Dockerfile.build: reproducible Temurin 25 Java factory image
+  modules:
+    - java/icstudio-core: shared IDs, revisions, errors, immutable value objects
+    - java/icstudio-project: project/library/cell/view model and deterministic persistence
+    - java/icstudio-command: transactions, journaling, recovery, future undo history
+    - java/icstudio-geometry: exact DBU geometry and reference spatial index
+    - java/icstudio-connectivity: connectivity types and future ERC/netlisting contracts
+    - java/icstudio-pdk: deterministic PDK metadata and layer-purpose mappings
+    - java/icstudio-netlist-ir: structural simulator-neutral netlist IR and SPICE scaffold
+    - java/icstudio-result-db: deterministic result metadata/scalar vectors
+    - java/icstudio-experiment: run-plan and experiment-domain skeleton
+    - java/icstudio-platform: platform materials, filesystem/process abstractions, FFM boundary
+    - java/icstudio-worker: versioned worker envelopes and worker main process
+    - java/icstudio-cli: headless CLI using the same domain services
+    - java/icstudio-mcp: MCP stdio gateway using the same domain services
+    - java/icstudio-ui: Swing design system, docking shell, project views, Skija scene host
+    - java/icstudio-app: desktop application entry point and dependency assembly
+    - java/icstudio-conformance: Rust-oracle differential fixtures and cross-surface parity tests
+  migration_evidence:
+    - .project/decisions/ADR-0001-java25-swing-pivot.toml
+    - .project/workpacks/WP-0005.yaml
+    - .project/checkpoints/CP-JAVA-M0-FACTORY.json
+    - .project/checkpoints/CP-JAVA-M1-KERNEL.json
+
+interfaces:
+  core_types: |
+    package dev.icstudio.core;
+
+    public record ObjectId(long high, long low) implements Comparable<ObjectId> {}
+    public record Revision(long value) implements Comparable<Revision> {}
+    public record ProjectId(ObjectId value) {}
+    public record RequestId(ObjectId value) {}
+  project_query: |
+    package dev.icstudio.project;
+
+    public interface ProjectQueries {
+        ProjectSnapshot snapshot();
+    }
+
+    public record ProjectSnapshot(
+        ProjectId projectId,
+        Revision revision,
+        String name,
+        int libraries,
+        int cells,
+        int views
+    ) {}
+  project_commands: |
+    package dev.icstudio.command;
+
+    public sealed interface ProjectCommand permits AddLibrary, AddCell, AddView {
+        Revision expectedRevision();
+    }
+
+    public interface CommandBus {
+        CommandResult submit(ProjectCommand command);
+    }
+
+    public record CommandResult(Revision committedRevision) {}
+  worker_protocol: |
+    package dev.icstudio.worker;
+
+    public record WorkerRequest(
+        int protocolVersion,
+        RequestId requestId,
+        ProjectId projectId,
+        Revision revision,
+        String operation,
+        byte[] payload
+    ) {}
+
+    public record WorkerResponse(
+        int protocolVersion,
+        RequestId requestId,
+        boolean success,
+        byte[] payload,
+        String diagnostic
+    ) {}
+  ui_materials: |
+    package dev.icstudio.ui.material;
+
+    public enum StudioMaterial {
+        SOLID,
+        SIDEBAR,
+        TOOLBAR,
+        INSPECTOR,
+        POPOVER,
+        MENU,
+        HUD,
+        CANVAS
+    }
+
+    public interface MaterialSupport {
+        void apply(java.awt.Window window, StudioMaterial material);
+        boolean supportsBackdropBlur();
+    }
+
+execution:
+  - task: 1
+    name: Accept architecture and rewrite authoritative constitution
+    files:
+      modify:
+        - AGENTS.md
+        - .project/decisions/ADR-0001-java25-swing-pivot.toml
+        - .project/truth.json
+        - .project/capabilities.json
+      create:
+        - .project/workpacks/WP-0006.yaml
+    test_cycle:
+      failing_assertion: >-
+        Add a repository-policy validation that fails while AGENTS.md still names
+        Electron/React/TypeScript or Rust as the authoritative desktop/platform stack.
+      implementation: >-
+        Amend architecture, repository layout, language/toolchain, desktop UX, M1 restart,
+        and migration sections so Java 25/Swing is normative; mark ADR-0001 accepted;
+        reset live truth to 0/100 while preserving CP-M1-KERNEL as historical evidence.
+      verify:
+        - just validate
+        - grep must find Java 25 and Swing in AGENTS.md
+        - grep must not find the old Electron/React authoritative architecture outside historical migration text
+      commit: 'architecture: accept Java 25 Swing authoritative stack'
+
+  - task: 2
+    name: Build the reproducible Java J0 factory
+    files:
+      create:
+        - pom.xml
+        - mvnw
+        - mvnw.cmd
+        - .mvn/wrapper/maven-wrapper.properties
+        - .mvn/wrapper/maven-wrapper.jar
+        - java/icstudio-core/pom.xml
+        - java/icstudio-core/src/main/java/dev/icstudio/core/ObjectId.java
+        - java/icstudio-core/src/main/java/dev/icstudio/core/Revision.java
+        - java/icstudio-core/src/test/java/dev/icstudio/core/ObjectIdTest.java
+      modify:
+        - justfile
+        - Dockerfile.build
+        - .github/workflows/ci.yml
+        - .github/workflows/release-builds.yml
+    test_cycle:
+      failing_test: |
+        @Test
+        void objectIdRoundTripsAsFixedWidthHex() {
+            var id = new ObjectId(0x0123456789ABCDEFL, 0x0FEDCBA987654321L);
+            assertEquals("0123456789abcdef0fedcba987654321", id.toHex());
+            assertEquals(id, ObjectId.parseHex(id.toHex()));
+        }
+      red_command: ./mvnw -pl java/icstudio-core -am test
+      implementation: >-
+        Configure the Maven reactor for --release 25, Temurin 25.0.4+7 in CI,
+        Maven 3.9.16 wrapper, JUnit 6.1.2 BOM, Maven Compiler Plugin 3.15.0,
+        Maven Enforcer 3.6.3, reproducible timestamps, and CycloneDX 2.9.3.
+      green_commands:
+        - ./mvnw -B -ntp verify
+        - just bootstrap
+        - just build
+        - just test-fast
+      commit: 'build(java): establish reproducible JDK 25 factory'
+
+  - task: 3
+    name: Recreate project identity, hierarchy, and deterministic persistence in Java
+    files:
+      create:
+        - java/icstudio-project/pom.xml
+        - java/icstudio-project/src/main/java/dev/icstudio/project/Project.java
+        - java/icstudio-project/src/main/java/dev/icstudio/project/Library.java
+        - java/icstudio-project/src/main/java/dev/icstudio/project/Cell.java
+        - java/icstudio-project/src/main/java/dev/icstudio/project/View.java
+        - java/icstudio-project/src/main/java/dev/icstudio/project/ProjectSnapshot.java
+        - java/icstudio-project/src/main/java/dev/icstudio/project/ProjectCodec.java
+        - java/icstudio-project/src/main/java/dev/icstudio/project/ProjectStore.java
+        - java/icstudio-project/src/test/java/dev/icstudio/project/ProjectRoundTripTest.java
+        - java/icstudio-conformance/src/test/java/dev/icstudio/conformance/RustProjectOracleTest.java
+    test_cycle:
+      failing_test: |
+        @Test
+        void saveOpenPreservesStableIdsHierarchyRevisionAndBytes() throws Exception {
+            var store = ProjectStore.create(temp.resolve("demo.icstudio"), "demo");
+            var project = store.load();
+            var encoded1 = ProjectCodec.encode(project);
+            store.save(project);
+            var reopened = store.load();
+            var encoded2 = ProjectCodec.encode(reopened);
+            assertEquals(project.snapshot(), reopened.snapshot());
+            assertArrayEquals(encoded1, encoded2);
+        }
+      red_command: ./mvnw -pl java/icstudio-project -am test
+      implementation: >-
+        Port CP-M1-KERNEL project semantics, preserving schema versioning, stable 128-bit IDs,
+        signed revision semantics, deterministic canonical ordering, and forward-readable errors.
+      differential_gate: >-
+        Java loads a Rust-oracle fixture and emits the same canonical project summary;
+        where binary representation differs, both implementations must satisfy the documented
+        project-v1 semantic fixture and a versioned migration path must be recorded.
+      green_command: ./mvnw -pl java/icstudio-project,java/icstudio-conformance -am test
+      commit: 'feat(java-project): port authoritative project store'
+
+  - task: 4
+    name: Port transactions, write-ahead journal, and crash recovery
+    files:
+      create:
+        - java/icstudio-command/pom.xml
+        - java/icstudio-command/src/main/java/dev/icstudio/command/ProjectCommand.java
+        - java/icstudio-command/src/main/java/dev/icstudio/command/AddLibrary.java
+        - java/icstudio-command/src/main/java/dev/icstudio/command/AddCell.java
+        - java/icstudio-command/src/main/java/dev/icstudio/command/AddView.java
+        - java/icstudio-command/src/main/java/dev/icstudio/command/CommandBus.java
+        - java/icstudio-command/src/main/java/dev/icstudio/command/Journal.java
+        - java/icstudio-command/src/main/java/dev/icstudio/command/TransactionalProjectService.java
+        - java/icstudio-command/src/test/java/dev/icstudio/command/CrashRecoveryTest.java
+        - java/icstudio-command/src/test/java/dev/icstudio/command/StaleRevisionTest.java
+    test_cycle:
+      failing_test: |
+        @Test
+        void staleRevisionCannotOverwriteCommittedState() throws Exception {
+            var service = fixture.service();
+            service.submit(new AddLibrary(new Revision(0), "analog"));
+            assertThrows(StaleRevisionException.class,
+                () -> service.submit(new AddLibrary(new Revision(0), "digital")));
+        }
+      crash_test: >-
+        Launch a helper JVM, stop it immediately after durable journal publication but before
+        final project replacement, reopen from a second JVM, and assert exactly one committed
+        transaction and no partial object graph.
+      green_command: ./mvnw -pl java/icstudio-command -am test
+      commit: 'feat(java-command): port revision-safe transactions and recovery'
+
+  - task: 5
+    name: Port exact geometry and one-million-shape reference baseline
+    files:
+      create:
+        - java/icstudio-geometry/pom.xml
+        - java/icstudio-geometry/src/main/java/dev/icstudio/geometry/Point.java
+        - java/icstudio-geometry/src/main/java/dev/icstudio/geometry/Rect.java
+        - java/icstudio-geometry/src/main/java/dev/icstudio/geometry/ShapeId.java
+        - java/icstudio-geometry/src/main/java/dev/icstudio/geometry/ReferenceSpatialIndex.java
+        - java/icstudio-geometry/src/test/java/dev/icstudio/geometry/ExactGeometryTest.java
+        - java/icstudio-geometry/src/test/java/dev/icstudio/geometry/MillionShapeBaselineTest.java
+    test_cycle:
+      failing_test: |
+        @Test
+        void rectangleArithmeticRejectsOverflow() {
+            var rect = new Rect(Long.MAX_VALUE - 1, 0, Long.MAX_VALUE, 1);
+            assertThrows(ArithmeticException.class, () -> rect.translate(2, 0));
+        }
+      baseline: >-
+        Deterministically create 1,000,000 simple rectangles, index them, run the same query
+        corpus as the accepted Rust baseline, assert identical hit sets, and record wall-clock
+        and peak-memory evidence without promoting a performance claim beyond the baseline.
+      green_command: ./mvnw -pl java/icstudio-geometry -am test
+      commit: 'feat(java-geometry): port exact DBU geometry baseline'
+
+  - task: 6
+    name: Port PDK, netlist IR, result DB, SPICE framing, and GDS framing scaffolds
+    files:
+      create:
+        - java/icstudio-pdk/pom.xml
+        - java/icstudio-netlist-ir/pom.xml
+        - java/icstudio-result-db/pom.xml
+        - java/icstudio-pdk/src/main/java/dev/icstudio/pdk/Technology.java
+        - java/icstudio-netlist-ir/src/main/java/dev/icstudio/netlist/Netlist.java
+        - java/icstudio-netlist-ir/src/main/java/dev/icstudio/netlist/SpiceParser.java
+        - java/icstudio-result-db/src/main/java/dev/icstudio/results/ResultStore.java
+        - java/icstudio-project/src/main/java/dev/icstudio/io/GdsRecordReader.java
+        - java/icstudio-conformance/src/test/java/dev/icstudio/conformance/HeadlessSchemaOracleTest.java
+    test_cycle:
+      required_tests:
+        - deterministic PDK serialization and layer-purpose mapping validation
+        - structural CMOS inverter SPICE parse with source-line diagnostics
+        - malformed/truncated GDS record length and parity rejection
+        - result scalar-vector exact IEEE-754 bit-pattern round trip
+        - Java versus Rust fixture equivalence for published M1 schemas
+      green_command: ./mvnw -pl java/icstudio-pdk,java/icstudio-netlist-ir,java/icstudio-result-db,java/icstudio-conformance -am test
+      commit: 'feat(java-ir): port M1 PDK netlist result and format scaffolds'
+
+  - task: 7
+    name: Port isolated worker lifecycle and typed protocol
+    files:
+      create:
+        - java/icstudio-worker/pom.xml
+        - java/icstudio-worker/src/main/java/dev/icstudio/worker/WorkerRequest.java
+        - java/icstudio-worker/src/main/java/dev/icstudio/worker/WorkerResponse.java
+        - java/icstudio-worker/src/main/java/dev/icstudio/worker/WorkerCodec.java
+        - java/icstudio-worker/src/main/java/dev/icstudio/worker/WorkerMain.java
+        - java/icstudio-worker/src/test/java/dev/icstudio/worker/WorkerProtocolTest.java
+        - java/icstudio-worker/src/test/java/dev/icstudio/worker/WorkerCrashIsolationTest.java
+    test_cycle:
+      failing_test: |
+        @Test
+        void crashingWorkerCannotTerminateOrCorruptParent() throws Exception {
+            var project = fixture.persistedProject();
+            var worker = WorkerProcess.start("abort");
+            assertNotEquals(0, worker.waitFor());
+            assertEquals(project.snapshot(), ProjectStore.open(project.path()).load().snapshot());
+        }
+      implementation: >-
+        Use a separate `java` process with a versioned binary-safe envelope. Keep project state
+        outside the worker and pass project/revision/request identity on every operation.
+      green_command: ./mvnw -pl java/icstudio-worker -am test
+      commit: 'feat(java-worker): port crash-isolated worker protocol'
+
+  - task: 8
+    name: Port CLI and MCP over the same Java services
+    files:
+      create:
+        - java/icstudio-cli/pom.xml
+        - java/icstudio-cli/src/main/java/dev/icstudio/cli/IcStudioCli.java
+        - java/icstudio-mcp/pom.xml
+        - java/icstudio-mcp/src/main/java/dev/icstudio/mcp/McpServer.java
+        - java/icstudio-mcp/src/main/java/dev/icstudio/mcp/JsonRpcRequest.java
+        - java/icstudio-mcp/src/test/java/dev/icstudio/mcp/McpProtocolTest.java
+        - java/icstudio-conformance/src/test/java/dev/icstudio/conformance/CliMcpParityTest.java
+    test_cycle:
+      required_tests:
+        - missing CLI option values return precise errors
+        - MCP top-level id/method parsing ignores nested lookalikes
+        - MCP locked protocol revision negotiation remains compatible with existing fixtures
+        - CLI project summary bytes equal MCP structured project summary bytes
+      implementation: >-
+        Both surfaces call `ProjectQueries` and `CommandBus`; MCP may run as a separate process
+        but must not independently parse authoritative project files or duplicate engineering semantics.
+      green_command: ./mvnw -pl java/icstudio-cli,java/icstudio-mcp,java/icstudio-conformance -am test
+      commit: 'feat(java-surfaces): port CLI and MCP shared services'
+
+  - task: 9
+    name: Build the ICStudio Swing design-system foundation
+    files:
+      create:
+        - java/icstudio-ui/pom.xml
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/theme/StudioTokens.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/material/StudioMaterial.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/material/MaterialSupport.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/components/StudioButton.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/components/StudioSidebar.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/components/StudioInspector.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/components/StudioDisclosureGroup.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/workspace/StudioWorkspace.java
+        - java/icstudio-ui/src/test/java/dev/icstudio/ui/StudioTokensTest.java
+        - java/icstudio-ui/src/test/java/dev/icstudio/ui/AccessibilityContractTest.java
+    test_cycle:
+      failing_test: |
+        @Test
+        void engineeringCanvasMaterialIsAlwaysOpaqueByDefault() {
+            assertEquals(1.0f, StudioTokens.defaultOpacity(StudioMaterial.CANVAS));
+        }
+      implementation: >-
+        Install FlatLaf 3.7.2 only as Swing plumbing; ICStudio owns fonts, spacing, control
+        geometry, focus rings, semantic surfaces, motion durations, density modes, and accessible
+        contrast/focus policies. Do not expose raw FlatLaf keys to application screens.
+      green_command: ./mvnw -pl java/icstudio-ui -am test
+      commit: 'feat(java-ui): establish ICStudio Swing design system'
+
+  - task: 10
+    name: Add Skija scene host and HIG-informed workbench shell
+    files:
+      create:
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/scene/StudioScene.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/scene/SkiaScenePanel.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/workspace/ProjectWorkbench.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/workspace/LibraryNavigator.java
+        - java/icstudio-ui/src/main/java/dev/icstudio/ui/workspace/ProjectInspector.java
+        - java/icstudio-ui/src/test/java/dev/icstudio/ui/ProjectSnapshotBindingTest.java
+        - java/icstudio-app/pom.xml
+        - java/icstudio-app/src/main/java/dev/icstudio/app/ICStudio.java
+    test_cycle:
+      required_tests:
+        - workbench renders an immutable ProjectSnapshot and cannot mutate domain state directly
+        - sidebar/inspector/toolbar use semantic materials while center engineering canvas remains controlled solid
+        - keyboard traversal reaches library navigator, canvas, inspector, command/search entry, and bottom panel
+        - theme switch keeps domain snapshot identity and revision unchanged
+      implementation: >-
+        Use Swing for window chrome, controls, menus, trees, tables and accessibility; use Skija
+        0.143.17 only inside scene-host surfaces. Start with a project/library/cell/view explorer
+        shell, not schematic editing, because M2 remains blocked until parity acceptance.
+      green_command: ./mvnw -pl java/icstudio-ui,java/icstudio-app -am test
+      commit: 'feat(java-ui): add Skia-backed M1 workbench shell'
+
+  - task: 11
+    name: Implement native material adapters with safe fallbacks
+    files:
+      create:
+        - java/icstudio-platform/pom.xml
+        - java/icstudio-platform/src/main/java/dev/icstudio/platform/Platform.java
+        - java/icstudio-platform/src/main/java/dev/icstudio/platform/MacMaterialSupport.java
+        - java/icstudio-platform/src/main/java/dev/icstudio/platform/WindowsMaterialSupport.java
+        - java/icstudio-platform/src/main/java/dev/icstudio/platform/LinuxMaterialSupport.java
+        - java/icstudio-platform/src/main/java/dev/icstudio/platform/SolidMaterialSupport.java
+        - java/icstudio-platform/src/test/java/dev/icstudio/platform/MaterialFallbackTest.java
+    test_cycle:
+      failing_test: |
+        @Test
+        void unsupportedBlurFallsBackToOpaqueWithoutChangingRequestedSemanticRole() {
+            var support = new SolidMaterialSupport();
+            var result = support.resolve(StudioMaterial.SIDEBAR, true);
+            assertEquals(StudioMaterial.SIDEBAR, result.role());
+            assertFalse(result.backdropBlur());
+            assertEquals(1.0f, result.opacity());
+        }
+      implementation: >-
+        Keep FFM calls behind platform adapters. macOS may map semantic materials to AppKit
+        visual-effect materials, Windows to supported composition APIs, and Linux to compositor
+        capabilities where safely discoverable. Failure or unsupported capability must never block launch.
+      green_command: ./mvnw -pl java/icstudio-platform,java/icstudio-ui -am test
+      commit: 'feat(java-platform): add semantic native material adapters'
+
+  - task: 12
+    name: Prove Swing CLI MCP state equivalence and accept Java J1
+    files:
+      create:
+        - java/icstudio-conformance/src/test/java/dev/icstudio/conformance/SurfaceEquivalenceTest.java
+        - java/icstudio-conformance/src/test/java/dev/icstudio/conformance/RustOracleCorpusTest.java
+        - .project/checkpoints/CP-JAVA-M1-KERNEL.json
+      modify:
+        - .project/truth.json
+        - .project/capabilities.json
+        - .project/workpacks/WP-0005.yaml
+        - README.md
+        - .github/workflows/ci.yml
+    test_cycle:
+      equivalence_test: |
+        @Test
+        void swingCliAndMcpExposeIdenticalProjectSnapshot() throws Exception {
+            var expected = fixture.projectQueries().snapshot();
+            assertEquals(expected, fixture.cliSnapshot());
+            assertEquals(expected, fixture.mcpSnapshot());
+            assertEquals(expected, fixture.swingSnapshot());
+        }
+      mandatory_gates:
+        - ./mvnw -B -ntp verify
+        - Rust-oracle differential suite passes
+        - one-million-shape Java baseline passes
+        - worker crash isolation passes
+        - project crash recovery passes
+        - Swing/CLI/MCP snapshot and revision equivalence passes
+        - Windows hosted CI passes
+        - macOS hosted CI passes
+        - Linux hosted CI passes
+        - reproducible non-root Java container passes
+        - Java dependency licence policy passes
+        - CycloneDX SBOM is generated and archived
+      acceptance: >-
+        Create CP-JAVA-M1-KERNEL, set M0 and M1 accepted, restore truth score to 8/100,
+        and record the exact accepted commit plus workflow run. Do not delete legacy code in this task.
+      commit: 'project(java): accept CP-JAVA-M1-KERNEL at 8 of 100'
+
+  - task: 13
+    name: Remove superseded Electron React and Rust application stack after accepted parity
+    prerequisite: CP-JAVA-M1-KERNEL must exist and resume-check successfully
+    files:
+      delete_after_evidence_archive:
+        - apps/workbench/**
+        - superseded Rust application/platform crates and binaries
+        - Node package manifests and lockfiles
+        - obsolete Rust-only CI/build wiring
+      retain:
+        - language-neutral schemas
+        - corpus fixtures
+        - Rust-oracle expected outputs needed for historical reproducibility
+        - CP-M1-KERNEL historical checkpoint
+        - accepted workflow evidence references
+      modify:
+        - AGENTS.md
+        - README.md
+        - .project/capabilities.json
+        - .project/workpacks/WP-0005.yaml
+        - justfile
+        - .github/workflows/ci.yml
+        - .github/workflows/release-builds.yml
+    test_cycle:
+      required_checks:
+        - repository search finds no production Electron React TypeScript Node dependency
+        - repository search finds no production Rust backend dependency
+        - ./mvnw -B -ntp verify passes from clean checkout
+        - all three native CI platforms and Java container pass
+        - CP-JAVA-M1-KERNEL resume-check passes
+        - truth score remains 8/100
+      commit: 'refactor(java): retire superseded Rust Electron application stack'
+
+review_gates:
+  after_each_task:
+    - run task-local red/green tests
+    - run impacted-module tests
+    - review diff for architectural boundary violations
+    - commit independently
+  after_J0:
+    - independent review of build reproducibility, licence policy, and truth score 2/100
+  after_J1:
+    - independent review of every CP-M1-KERNEL mandatory gate before restoring 8/100
+  before_J2:
+    - verify archived Rust oracle evidence remains sufficient to reproduce migration claims
+
+self_review:
+  spec_coverage:
+    - authoritative Java language: covered by tasks 1-13
+    - Swing design system: covered by tasks 9-12
+    - Skija engineering surface: covered by task 10
+    - FFM/native materials: covered by task 11
+    - isolated worker JVMs: covered by task 7
+    - no frontend/backend split: enforced by tasks 3, 8, 9, 10, 12
+    - mature native reuse policy: constitutional in task 1; actual libraries deferred until a capability needs them
+    - Rust conformance oracle: covered by tasks 3, 6, 8, 12, 13
+    - truth reset and restoration: covered by tasks 1, 2, 12
+    - no M2 before parity: global constraint and task 12 acceptance gate
+  placeholder_scan: passed
+  interface_consistency: passed
+
+checkpoint:
+  current: CP-M1-KERNEL
+  next_factory: CP-JAVA-M0-FACTORY
+  next_kernel: CP-JAVA-M1-KERNEL
+  notes: >-
+    This work package is the execution plan for ADR-0001. It does not authorize M2 work
+    until Java M1 parity is independently accepted.

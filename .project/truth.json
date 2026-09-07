@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "final_target": "ICStudio 1.0 as defined by AGENTS.md M8",
+  "score_formula": "sum(milestone.weight * milestone.completion)",
+  "reported_score": 0.0,
+  "assessment": "ADR-0001 changed the authoritative implementation stack to Java 25 + Swing. The prior Rust/Electron M0/M1 implementation remains preserved as CP-M1-KERNEL and a conformance oracle, but contributes no live implementation credit. J0 must re-establish the Java factory before M0 returns to 2/100; J1 must reproduce M1 before the score returns to 8/100. M2 is blocked until CP-JAVA-M1-KERNEL is accepted.",
+  "milestones": [
+    {
+      "id": "M0",
+      "name": "Constitution and reproducible factory",
+      "weight": 2.0,
+      "completion": 0.0,
+      "status": "migration-required",
+      "evidence": [
+        "GitHub Actions run 30773006326",
+        "Ubuntu factory gate passed",
+        "macOS factory gate passed",
+        "Windows factory gate passed",
+        "Reproducible Linux container passed",
+        "Dependency-free Rust bootstrap",
+        "stdio MCP smoke server",
+        "Checkpoint and resume validation",
+        "SPDX SBOM generator",
+        "MIT licence check"
+      ]
+    },
+    {
+      "id": "M1",
+      "name": "Design kernel and headless skeleton",
+      "weight": 6.0,
+      "completion": 0.0,
+      "status": "migration-required",
+      "evidence": [
+        "GitHub Actions run 30775698631 hardened project RPC MCP and evidence foundations on Ubuntu macOS Windows and the pinned non-root container",
+        "GitHub Actions run 30776034205 validated eight dependency-free workspace crates on Ubuntu macOS Windows and the pinned non-root container",
+        "Project create/save/reopen hierarchy test passed",
+        "Injected-termination journal recovery and immutable checkpoint tests passed",
+        "Deterministic project PDK and result serialization round trips passed",
+        "One-million-shape geometry baseline passed on Ubuntu release build",
+        "Worker crash isolation passed",
+        "CLI and MCP project state/revision equivalence and top-level JSON-RPC correlation passed",
+        "PDK layer-purpose and model-reference validation passed",
+        "Structural CMOS inverter SPICE parsing passed",
+        "GDSII record framing and malformed-input tests passed",
+        "Project RPC PDK and result version-1 schemas published",
+        "GitHub Actions run 30795833188 passed Ubuntu macOS Windows and pinned non-root Linux container",
+        "Electron and React workbench shell built from the locked npm graph",
+        "WebGPU scene prototype bundle and compiled shell security tests passed",
+        "CLI UI bridge and MCP project state/revision equivalence passed",
+        "npm lockfile version 3 with SHA-256-bound licence and SPDX evidence"
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "Schematic to reference simulation",
+      "weight": 13.0,
+      "completion": 0.0,
+      "status": "not-started",
+      "evidence": []
+    },
+    {
+      "id": "M3",
+      "name": "Layout, transient, and verification loop",
+      "weight": 18.0,
+      "completion": 0.0,
+      "status": "not-started",
+      "evidence": []
+    },
+    {
+      "id": "M4",
+      "name": "ADE experiments and open-PDK beta",
+      "weight": 15.0,
+      "completion": 0.0,
+      "status": "not-started",
+      "evidence": []
+    },
+    {
+      "id": "M5",
+      "name": "Parallel solver expansion I",
+      "weight": 14.0,
+      "completion": 0.0,
+      "status": "not-started",
+      "evidence": []
+    },
+    {
+      "id": "M6",
+      "name": "All solver classes represented",
+      "weight": 14.0,
+      "completion": 0.0,
+      "status": "not-started",
+      "evidence": []
+    },
+    {
+      "id": "M7",
+      "name": "Convergence, acceleration, and parity audit",
+      "weight": 8.0,
+      "completion": 0.0,
+      "status": "not-started",
+      "evidence": []
+    },
+    {
+      "id": "M8",
+      "name": "Tapeout evidence and 1.0 release",
+      "weight": 10.0,
+      "completion": 0.0,
+      "status": "not-started",
+      "evidence": []
+    }
+  ],
+  "known_risks": [
+    "Authoritative Java 25/Swing migration is in progress; historical Rust/Electron evidence does not count toward live truth",
+    "The MCP gateway uses a bounded bootstrap JSON parser rather than a complete schema-generated implementation",
+    "The release-build workflow defines native targets but has not yet been exercised by a version tag",
+    "The reference spatial index is not a production R-tree or hierarchical layout index",
+    "Transactions remain add-only and do not provide undo redo or concurrent writer coordination",
+    "The M1 desktop shell is a read-only project snapshot and WebGPU scene prototype; packaging and design editors are not implemented",
+    "The PDK implementation stores metadata only and does not execute PCells rule decks or compact models",
+    "SPICE and GDSII support is structural parser scaffolding rather than full interoperability",
+    "The result database stores bounded scalar vectors without streaming compression plotting or solver integration",
+    "No schematic editor layout editor simulator verification extraction EM thermal photonic optimization or tapeout capability exists"
+  ],
+  "historical_baseline": {
+    "checkpoint": "CP-M1-KERNEL",
+    "score": 8.0,
+    "architecture": "Rust + Electron/React M1",
+    "credit": "historical-only"
+  },
+  "active_architecture": "Java 25 + Swing migration (ADR-0001)"
+}

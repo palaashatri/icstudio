@@ -1,0 +1,13 @@
+[package]
+name = "icstudio-project"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Authoritative ICStudio project, hierarchy, transaction, persistence, and recovery model"
+
+[lib]
+name = "icstudio_project"
+path = "src/lib.rs"

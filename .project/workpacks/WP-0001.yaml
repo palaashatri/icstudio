@@ -1,0 +1,70 @@
+id: WP-0001
+title: Establish M0 reproducible factory
+capability: CAP-INFRA-BOOT
+milestone: M0
+status: accepted
+priority: critical
+owner: chatgpt-gpt-5.6-thinking
+reviewer: independent-ci
+qa_owner: independent-ci
+depends_on: []
+contracts:
+  inputs:
+    - AGENTS.md#M0
+    - toolchains/mcp.lock
+  outputs:
+    - dependency-free Rust workspace
+    - cross-platform build and test workflows
+    - read-only stdio MCP smoke server
+    - weighted truth score
+    - checkpoint and resume verification
+allowed_paths:
+  - Cargo.toml
+  - Cargo.lock
+  - rust-toolchain.toml
+  - justfile
+  - LICENSE
+  - README.md
+  - SECURITY.md
+  - Dockerfile.build
+  - crates/platform/**
+  - .github/workflows/**
+  - .project/**
+  - toolchains/**
+forbidden_paths:
+  - AGENTS.md
+acceptance:
+  commands:
+    - just bootstrap
+    - just build
+    - just test-fast
+    - just validate
+    - just license-check
+    - just mcp-smoke
+  tests:
+    - platform::truth_score_is_deliberately_conservative
+    - platform::project_state_validates
+    - platform::checkpoint_detects_state_drift
+    - mcp_stdio::stdio_server_negotiates_and_lists_the_m0_surface
+    - mcp_stdio::stdio_server_rejects_an_unlocked_protocol_revision
+  performance_budget: startup-only; no numerical performance claim
+clean_room:
+  proprietary_inputs_used: false
+  public_sources:
+    - Model Context Protocol public specification
+artifacts:
+  expected:
+    - capability-report.md
+    - icstudio.spdx.json
+    - cross-platform binaries
+  evidence:
+    workflow_run: 30773006326
+    accepted_commit: 07b0858a9bb4d8a2f2288dfa9eed5440d78efa05
+    gates:
+      - ubuntu-latest factory gate: passed
+      - macos-latest factory gate: passed
+      - windows-latest factory gate: passed
+      - reproducible Linux image: passed
+checkpoint:
+  last_green_commit: 07b0858a9bb4d8a2f2288dfa9eed5440d78efa05
+  notes: M0 accepted. Resume from this commit or any later commit whose full M0 gate remains green.
