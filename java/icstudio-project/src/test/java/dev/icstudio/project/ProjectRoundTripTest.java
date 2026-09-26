@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Test;
 
 final class ProjectRoundTripTest {
     private static final String RUST_COMPATIBLE_FIXTURE = """
-            ICSTUDIO_PROJECT	1
-            project	00000000000000010000000000000002	7	demo
-            library	00000000000000100000000000000010	analog
-            cell	00000000000000200000000000000020	analog	inverter
-            view	00000000000000300000000000000030	analog	inverter	schematic	schematic
-            view	00000000000000400000000000000040	analog	inverter	symbol	symbol
-            """;
+            ICSTUDIO_PROJECT\t1
+            project\t00000000000000010000000000000002\t7\tdemo
+            library\t00000000000000100000000000000010\tanalog
+            cell\t00000000000000200000000000000020\tanalog\tinverter
+            view\t00000000000000300000000000000030\tanalog\tinverter\tschematic\tschematic
+            view\t00000000000000400000000000000040\tanalog\tinverter\tsymbol\tsymbol
+            """.replace("\\t", "\t");
 
     @Test
     void rustM1FixtureRoundTripsByteForByte() {
@@ -60,9 +60,7 @@ final class ProjectRoundTripTest {
         var project = base.withLibraryAdded("zlib").withLibraryAdded("alib");
 
         var encoded = ProjectCodec.encode(project);
-        assertTrue(encoded.indexOf("	alib
-") < encoded.indexOf("	zlib
-"));
+        assertTrue(encoded.indexOf("\talib\n") < encoded.indexOf("\tzlib\n"));
     }
 
     @Test
@@ -82,10 +80,10 @@ final class ProjectRoundTripTest {
     @Test
     void malformedReferencesAndEscapesAreRejected() {
         var missingLibrary = """
-                ICSTUDIO_PROJECT	1
-                project	00000000000000000000000000000001	0	demo
-                cell	00000000000000000000000000000002	analog	inv
-                """;
+                ICSTUDIO_PROJECT\t1
+                project\t00000000000000000000000000000001\t0\tdemo
+                cell\t00000000000000000000000000000002\tanalog\tinv
+                """.replace("\\t", "\t");
         assertThrows(IllegalArgumentException.class, () -> ProjectCodec.decode(missingLibrary));
         assertThrows(IllegalArgumentException.class, () -> ProjectCodec.unescapeField("bad\\q"));
         assertThrows(IllegalArgumentException.class, () -> Project.create("bad name"));
