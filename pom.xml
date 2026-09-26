@@ -24,6 +24,7 @@
   <modules>
     <module>java/icstudio-core</module>
     <module>java/icstudio-project</module>
+    <module>java/icstudio-command</module>
     <module>java/icstudio-ui</module>
   </modules>
 
