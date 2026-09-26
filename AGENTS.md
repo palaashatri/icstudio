@@ -2461,3 +2461,383 @@ The following public resources are starting points, not implementation specifica
 - Verilator documentation: https://verilator.org/guide/latest/
 
 Each solver track must expand its own machine-readable bibliography with public papers, standards, benchmark provenance, and licence metadata.
+
+
+<!-- ICSTUDIO-ATOMIC-IMPLEMENTATION-BLUEPRINT-2026-09-26 -->
+# Atomic implementation blueprint and design notes
+
+> **Effective:** 2026-09-26  
+> **Authority:** This section refines the Java 25/Swing migration into small, independently implementable and testable units. It does not relax the J0/J1 migration gates or the prohibition on beginning M2 engineering editors before Java M1 parity is accepted.
+
+## Documentation policy
+
+The repository has exactly two human-facing Markdown documents:
+
+1. `README.md` — concise public project entry point.
+2. `AGENTS.md` — authoritative architecture, implementation plan, design notes, security policy, testing policy, milestones, and agent instructions.
+
+Do not add separate architecture, design, roadmap, planning, security, implementation-note, truth, or status Markdown files. Machine-readable evidence under `.project/`, schemas, build manifests, source comments, and generated artifacts remain separate because they are executable or auditable project state rather than competing prose documentation.
+
+When a new design decision is required, record the machine-readable decision under `.project/decisions/` and immediately reconcile the normative prose here. When a new work package is required, keep its machine-readable execution state under `.project/workpacks/` and keep the stable design/acceptance contract here.
+
+## Implementation order
+
+ICStudio is built from the inside out and from atoms upward. A higher layer may not invent behavior that is absent from the lower layer it depends upon.
+
+```text
+Design tokens
+  → semantic material roles
+    → atomic Swing controls
+      → compound controls
+        → workspace containers
+          → engineering canvas host
+            → workbench shell
+              → project/navigation surfaces
+                → schematic/layout/waveform editors
+                  → solver and verification workflows
+```
+
+In parallel, the engineering core proceeds through:
+
+```text
+ObjectId + Revision
+  → immutable project value objects
+    → deterministic persistence
+      → commands + journal + recovery
+        → exact geometry + connectivity
+          → PDK + netlist + result IR
+            → worker protocol
+              → CLI + MCP adapters
+                → cross-surface conformance
+```
+
+The UI consumes these services through typed Java APIs. UI code never becomes authoritative engineering state.
+
+## UI design-system decomposition
+
+### U0 — Semantic tokens
+
+**Purpose:** define the shared vocabulary for spacing, density, typography, dimensions, semantic colors, focus treatment, and motion timing.
+
+**Atomic outputs:**
+- `StudioTokens`
+- `StudioTypography`
+- no screen-specific constants
+
+**Tests:**
+- spacing scale is monotonic;
+- hit-target/control dimensions meet the project minimums;
+- token accessors always return non-null values;
+- mutable AWT value objects are returned defensively.
+
+### U1 — Material roles
+
+**Purpose:** separate visual intent from platform implementation.
+
+**Roles:**
+- `SOLID`
+- `SIDEBAR`
+- `TOOLBAR`
+- `INSPECTOR`
+- `POPOVER`
+- `MENU`
+- `HUD`
+- `CANVAS`
+
+Every component asks for a semantic role. Platform-specific blur, vibrancy, mica, translucency, or opaque fallback is provided by a `MaterialSupport` implementation. Engineering canvases default to controlled opaque surfaces.
+
+### U2 — Atomic controls
+
+Each control must have one responsibility, keyboard behavior, accessible naming, semantic sizing, deterministic rendering under the fallback material implementation, and no application-domain knowledge.
+
+Initial atoms:
+- `StudioButton`
+- labels and section labels
+- text field / search field
+- checkbox
+- radio button
+- combo box
+- segmented control
+- icon button
+- separator
+- progress indicator
+- inline validation message
+
+A control is accepted only when its enabled/disabled, focused/unfocused, selected/unselected where relevant, and accessible states are testable without launching the whole application.
+
+### U3 — Compound controls
+
+Initial compounds:
+- `StudioDisclosureGroup`
+- `StudioToolbar`
+- `StudioStatusBar`
+- field rows
+- labeled editor rows
+- search/filter row
+- breadcrumb
+- tab strip
+- empty-state panel
+- command palette result row
+
+Compound controls compose atoms; they do not fork styling rules.
+
+### U4 — Workspace containers
+
+Initial containers:
+- `StudioSidebar`
+- `StudioInspector`
+- `StudioWorkspace`
+- split panes
+- tab groups
+- dock hosts
+- floating tool windows
+- collapsible panes
+
+Workspace state is presentation state and may be persisted separately from engineering project state. Docking and tabbing must be replaceable behind stable interfaces so editor code is not coupled to one docking implementation.
+
+### U5 — Engineering canvas host
+
+Schematic, layout, waveform, mesh, and field views use a common scene-host contract. Swing owns focus, accessibility bridge, menus, clipboard, drag/drop, windowing, and surrounding controls; Skija/Skia owns dense engineering rendering.
+
+The canvas host must define:
+- logical-to-device coordinate transforms;
+- HiDPI scaling;
+- pan/zoom;
+- hit testing;
+- selection overlay;
+- invalidation regions;
+- input gesture dispatch;
+- accessibility proxy hooks;
+- deterministic scene snapshots for visual regression;
+- device-loss/fallback behavior.
+
+No schematic-specific or layout-specific object may be added to the generic scene-host contract.
+
+### U6 — Workbench shell
+
+The workbench composes:
+- global/application menu;
+- main toolbar;
+- library/project navigator;
+- central document area;
+- contextual inspector;
+- status bar;
+- command palette;
+- problems/log/job surfaces.
+
+Shell tests verify layout composition, focus traversal, command routing, persistence of presentation state, and that it consumes domain snapshots without owning domain entities.
+
+### U7 — Domain editors
+
+Domain editors are layered on top only after J1 parity acceptance:
+
+1. schematic document;
+2. symbol document;
+3. testbench document;
+4. layout document;
+5. waveform/result document;
+6. experiment/ADE document;
+7. verification marker browser;
+8. PDK/technology browser;
+9. job/run monitor.
+
+Each editor is decomposed into model adapter, command adapter, scene/view, inspector provider, toolbar/menu contributions, selection model, and acceptance tests.
+
+## Engineering-core decomposition
+
+### C0 — Core identities and revisioning
+- `ObjectId`
+- `Revision`
+- structured diagnostics/errors
+- cancellation/idempotency identifiers
+
+### C1 — Project hierarchy
+- Project
+- Library
+- Cell
+- View
+- ProjectSnapshot
+- deterministic codec/store
+
+### C2 — Commands and transactions
+- immutable commands
+- expected-revision checks
+- command bus
+- write-ahead journal
+- injected-crash recovery
+- future undo/redo history
+
+### C3 — Geometry and connectivity
+- exact signed 64-bit DBU points/rectangles/polygons
+- stable shape identities
+- reference spatial index
+- nets, terminals, pins, instances, hierarchy
+
+### C4 — PDK and interoperability
+- deterministic technology metadata
+- layer-purpose pairs
+- model references
+- bounded GDSII/OASIS/SPICE import scaffolds
+- hostile-input isolation
+
+### C5 — Simulation and results
+- simulator-neutral netlist IR
+- analyses/run plans
+- deterministic result metadata
+- waveform storage contract
+- provenance
+
+### C6 — Workers and jobs
+- versioned request/response envelopes
+- worker lifecycle
+- cancellation
+- crash containment
+- resource limits
+- binary/memory-mapped payload paths
+
+### C7 — Surfaces
+- CLI
+- MCP
+- Swing
+- SDK
+
+All surfaces delegate to the same command/query services and must produce equivalent revision-addressed project state for equivalent operations.
+
+## Feature decomposition after Java M1 parity
+
+After `CP-JAVA-M1-KERNEL`, product capability proceeds in thin vertical slices. Each slice must be useful, testable, and reviewable before the next is started.
+
+### Schematic vertical slices
+1. open blank schematic;
+2. place one primitive;
+3. select/move/delete;
+4. wire two terminals;
+5. hierarchy instance;
+6. property editing;
+7. undo/redo;
+8. deterministic save/reopen;
+9. netlist generation;
+10. testbench/run binding.
+
+### Simulation vertical slices
+1. parse one resistor network;
+2. operating point;
+3. DC sweep;
+4. transient RC;
+5. AC small-signal;
+6. nonlinear diode;
+7. MOS compact-model adapter;
+8. sparse solve;
+9. convergence diagnostics;
+10. waveform persistence and plotting.
+
+### Layout vertical slices
+1. blank layout and grid;
+2. rectangle placement;
+3. layer selection;
+4. select/move/delete;
+5. polygon/path;
+6. hierarchy instance;
+7. pin/label;
+8. snapping/rulers/measure;
+9. deterministic save/reopen;
+10. GDSII/OASIS import/export fixture.
+
+### Verification vertical slices
+1. one geometric DRC rule;
+2. marker rendering;
+3. rule-deck IR;
+4. connectivity extraction;
+5. simple LVS;
+6. RC extraction;
+7. antenna/ERC scaffolds;
+8. batch run orchestration;
+9. incremental recheck;
+10. reproducible report bundle.
+
+### Experiment/waveform vertical slices
+1. one simulation result;
+2. waveform plot;
+3. cursors/measurements;
+4. parameter sweep;
+5. corners;
+6. Monte Carlo seed/provenance;
+7. expression calculator;
+8. saved experiment;
+9. comparison view;
+10. export/report.
+
+No slice receives completion credit from UI presence alone; the corresponding command/domain behavior and deterministic test evidence must exist.
+
+## Test pyramid and acceptance
+
+Every atomic unit uses the cheapest test that can prove its contract:
+
+- pure value objects: unit tests;
+- Swing controls: headless/EDT contract tests;
+- workspace composition: component-tree tests;
+- keyboard/focus/accessibility: EDT behavioral tests;
+- engineering canvases: deterministic scene and image regression tests;
+- persistence: byte-for-byte round-trip fixtures where specified;
+- crash recovery: injected termination tests;
+- worker boundaries: subprocess integration tests;
+- CLI/MCP/Swing equivalence: conformance tests over one shared fixture;
+- performance baselines: dedicated non-default benchmark gates with hardware/runtime metadata.
+
+A change is not complete because it compiles. It is complete when the narrow contract named by its work item has a deterministic test and the parent module passes.
+
+## Current implementation slice
+
+The first implementation slice is `java/icstudio-ui`:
+
+- semantic tokens and typography;
+- semantic material roles with an opaque deterministic fallback;
+- `StudioButton`;
+- `StudioSidebar`;
+- `StudioInspector`;
+- `StudioDisclosureGroup`;
+- `StudioToolbar`;
+- `StudioStatusBar`;
+- `StudioWorkspace`;
+- a component catalog panel for visual QA;
+- unit/accessibility/workspace tests.
+
+This slice intentionally contains no project editor, no schematic semantics, no layout semantics, and no solver logic.
+
+# Security policy
+
+ICStudio is pre-alpha software. Do not use it for production tapeout decisions, proprietary PDK processing, or untrusted remote MCP access.
+
+## Reporting vulnerabilities
+
+Report security issues privately to the repository owner through GitHub's private vulnerability reporting feature when enabled. Do not open a public issue for vulnerabilities involving arbitrary code execution, project corruption, secret exposure, PDK disclosure, sandbox escape, or remote MCP authorization bypass.
+
+Include:
+
+- affected commit and platform;
+- minimal reproduction;
+- expected and observed behaviour;
+- impact assessment;
+- whether the issue involves proprietary material.
+
+## M0 security boundary
+
+The M0 MCP implementation:
+
+- supports local stdio only;
+- exposes programme status only;
+- offers no shell execution, filesystem browsing, network egress, design mutation, plugin loading, or solver dispatch;
+- is a protocol smoke implementation, not a hardened general-purpose JSON-RPC server.
+
+Remote transport, authentication, PDK handling, plugins, semantic design patches, and solver workers require dedicated threat models and acceptance gates before enablement.
+
+## Security acceptance extension
+
+The Java/Swing architecture adds the following mandatory boundaries:
+
+- Swing components must never execute arbitrary shell commands from display text, project metadata, PDK metadata, or MCP-provided strings.
+- File importers handling hostile or untrusted content must be bounded and may be isolated in worker JVMs before their output becomes authoritative state.
+- Worker JVMs receive explicit inputs and capabilities; they do not inherit unrestricted application secrets or arbitrary filesystem/network access by default.
+- MCP write operations, external data transfer, expensive solver dispatch, and plugin execution require explicit permission policy and audit records before they can be enabled.
+- Native FFM adapters must validate lifetimes, bounds, ownership, and failure paths and must have a pure-Java or disabled fallback where platform support is optional.
+- UI material/blur integration is cosmetic and may never weaken sandboxing, accessibility, or engineering-canvas legibility.
