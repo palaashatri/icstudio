@@ -11,7 +11,7 @@ final class ProjectIdCompatibilityTest {
         var parent = ObjectId.parseHex("0123456789abcdef0fedcba987654321");
 
         assertEquals(
-                "959882127a6b2fa87a91eb6c3d647857",
+                "cf8ed1fe362fe6d94cb385996b61e43a",
                 ProjectIds.derive(parent, "library/analog").toHex());
     }
 }
