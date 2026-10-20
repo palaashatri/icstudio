@@ -6,9 +6,9 @@ The authoritative product, solver, architecture, validation, and milestone contr
 
 ## Current implementation state
 
-**Truth score: 8/100. M0 and M1 are accepted. M2 has not started.**
+**Live truth score: 0/100** (`.project/truth.json`). ADR-0001 moved the authoritative stack to **Java 25 + Swing**; the Rust/Electron implementation described below reached 8/100 (M0 and M1 accepted, checkpoint `CP-M1-KERNEL`) and is now kept only as a conformance oracle. The Java port is in progress: `java/icstudio-core` and `java/icstudio-ui` are on `main`, and the project kernel (`icstudio-project`, `icstudio-command`) is in open PR #4. M2 has not started.
 
-The implementation branch currently contains:
+The Rust/Electron oracle on `main` contains:
 
 - reproducible Rust 2024 builds, SHA-pinned GitHub Actions, evidence generation, immutable checkpoints, and resume validation;
 - a digest-pinned reproducible Linux image that runs as a non-root user;
@@ -32,6 +32,17 @@ The implementation branch currently contains:
 The accepted restart point is `CP-M1-KERNEL`.
 
 M1 does **not** include a schematic editor, layout editor, circuit simulator, DRC, LVS, extraction, EM, thermal, reliability, photonics, optimization, or qualified tapeout flow. The workbench is currently a read-only project-state and WebGPU scene prototype. Production hierarchical geometry, undo/redo, concurrent-writer coordination, PCell and rule-deck execution, complete GDSII/SPICE interoperability, result streaming, application packaging, signing, notarization, and installers remain future work.
+
+## Roadmap
+
+In priority order. The first two finish the migration; the rest are what a circuit designer would actually notice.
+
+1. **Merge PR #4 and finish J0**: Maven wrapper, `just` recipes for the Java build, Java SBOM and licence evidence. Today the constitution names `mvnw`, `just test` and `just studio`, but none exist.
+2. **J1 — Java reaches parity with the Rust oracle** (geometry and 1M-shape index, journaling and recovery, worker isolation, CLI, MCP, Swing shell with a Skia canvas), then delete the Rust/Electron application code (J2).
+3. **Open a real PDK project:** load SkyWater SKY130 or GF180MCU layers and devices into the PDK model, so the workbench shows real technology data.
+4. **Schematic capture + simulation through ngspice:** draw a small circuit, netlist it, run DC/transient in ngspice as an external engine, and plot waveforms. Driving mature open engines (ngspice/Xyce, KLayout/Magic for DRC, Netgen for LVS) through the `adapters/` boundary gets designers useful results years before in-house solvers could.
+5. **Layout view with KLayout-backed DRC** for the same PDK.
+6. **MCP write tools** (semantic design patches) so an AI agent can make reviewed, revision-safe edits.
 
 ## Developer commands
 
