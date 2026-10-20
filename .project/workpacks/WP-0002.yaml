@@ -16,8 +16,8 @@ depends_on:
   - WP-0001
 contracts:
   inputs:
-    - AGENTS.md#8
-    - AGENTS.md#17-M1
+    - docs/CONSTITUTION.md#8
+    - docs/CONSTITUTION.md#17-M1
     - schemas/project-v1.txt
     - schemas/rpc-v1.txt
   outputs:

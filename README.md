@@ -2,7 +2,7 @@
 
 ICStudio is an MIT-licensed, local-first custom-IC design and signoff platform under active clean-room development.
 
-The authoritative product, solver, architecture, validation, and milestone contract is [`AGENTS.md`](AGENTS.md). Long-lived implementation work occurs on `milestone/m0-reproducible-factory` until the project adopts a differently named implementation branch through an explicit decision.
+The authoritative product, solver, architecture, validation, and milestone contract is [`docs/CONSTITUTION.md`](docs/CONSTITUTION.md). Instructions for coding agents (commands, rules, workflow) are in [`AGENTS.md`](AGENTS.md). Work happens on short-lived feature branches merged to `main` through pull requests.
 
 ## Current implementation state
 
@@ -155,4 +155,4 @@ Targets are Linux x86-64, Windows x86-64, Apple Silicon macOS, and Intel macOS. 
 
 ## Licence
 
-Project-owned code and documentation are licensed under the [MIT License](LICENSE). See `AGENTS.md` for third-party, clean-room, PDK, model, and solver provenance requirements.
+Project-owned code and documentation are licensed under the [MIT License](LICENSE). See `docs/CONSTITUTION.md` for third-party, clean-room, PDK, model, and solver provenance requirements.

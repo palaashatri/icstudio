@@ -10,7 +10,7 @@ qa_owner: independent-ci
 depends_on: []
 contracts:
   inputs:
-    - AGENTS.md#M0
+    - docs/CONSTITUTION.md#M0
     - toolchains/mcp.lock
   outputs:
     - dependency-free Rust workspace
