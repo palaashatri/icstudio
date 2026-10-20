@@ -15,9 +15,9 @@ depends_on:
   - WP-0003
 contracts:
   inputs:
-    - AGENTS.md#5-authoritative-state
-    - AGENTS.md#11-workbench-and-desktop-ux
-    - AGENTS.md#17-M1
+    - docs/CONSTITUTION.md#5-authoritative-state
+    - docs/CONSTITUTION.md#11-workbench-and-desktop-ux
+    - docs/CONSTITUTION.md#17-M1
     - schemas/project-v1.txt
   outputs:
     - Electron and React desktop shell scaffold

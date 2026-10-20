@@ -14,7 +14,7 @@ depends_on:
   - WP-0002
 contracts:
   inputs:
-    - AGENTS.md#17-M1
+    - docs/CONSTITUTION.md#17-M1
     - schemas/pdk-v1.txt
     - schemas/results-v1.txt
   outputs:

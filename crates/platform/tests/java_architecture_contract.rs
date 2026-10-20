@@ -11,24 +11,28 @@ fn repository_root() -> PathBuf {
 
 #[test]
 fn authoritative_constitution_requires_java_25_swing_stack() {
-    let agents = fs::read_to_string(repository_root().join("AGENTS.md"))
-        .expect("AGENTS.md must be readable");
+    assert!(
+        repository_root().join("AGENTS.md").is_file(),
+        "AGENTS.md agent guide must exist at the repository root"
+    );
+    let agents = fs::read_to_string(repository_root().join("docs/CONSTITUTION.md"))
+        .expect("docs/CONSTITUTION.md must be readable");
 
     assert!(
         agents.contains("Java 25"),
-        "AGENTS.md must name Java 25 as the authoritative application language"
+        "the constitution must name Java 25 as the authoritative application language"
     );
     assert!(
         agents.contains("Swing"),
-        "AGENTS.md must name Swing as the desktop toolkit"
+        "the constitution must name Swing as the desktop toolkit"
     );
     assert!(
         agents.contains("Skija") || agents.contains("Skia"),
-        "AGENTS.md must define Skia-backed engineering canvases"
+        "the constitution must define Skia-backed engineering canvases"
     );
     assert!(
         agents.contains("Foreign Function and Memory API") || agents.contains("FFM"),
-        "AGENTS.md must define Java FFM as the preferred native boundary"
+        "the constitution must define Java FFM as the preferred native boundary"
     );
     assert!(
         !agents.contains("Electron + React/TypeScript shell"),

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "final_target": "ICStudio 1.0 as defined by AGENTS.md M8",
+  "final_target": "ICStudio 1.0 as defined by docs/CONSTITUTION.md M8",
   "score_formula": "sum(milestone.weight * milestone.completion)",
   "reported_score": 0.0,
   "assessment": "ADR-0001 changed the authoritative implementation stack to Java 25 + Swing. The prior Rust/Electron M0/M1 implementation remains preserved as CP-M1-KERNEL and a conformance oracle, but contributes no live implementation credit. J0 must re-establish the Java factory before M0 returns to 2/100; J1 must reproduce M1 before the score returns to 8/100. M2 is blocked until CP-JAVA-M1-KERNEL is accepted.",
