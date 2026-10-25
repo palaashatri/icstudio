@@ -1,0 +1,18 @@
+icstudio: mutating project command requires --expected-revision
+
+Usage: icstudio [--project-root PATH] <command> [options]
+
+Commands:
+  project create --path PATH --name NAME
+  project show --path PATH
+  project add-library --path PATH --name NAME --expected-revision N [--request-id ID] [--actor ACTOR]
+  project add-cell --path PATH --library LIB --name NAME --expected-revision N [--request-id ID] [--actor ACTOR]
+  project add-view --path PATH --library LIB --cell CELL --name NAME --kind KIND --expected-revision N [--request-id ID] [--actor ACTOR]
+  validate
+  truth
+  capabilities [--output PATH]
+  checkpoint --name CP-...
+  resume-check --checkpoint CP-...
+  license-check
+  sbom --output PATH
+

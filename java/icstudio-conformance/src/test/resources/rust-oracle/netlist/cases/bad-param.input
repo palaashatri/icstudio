@@ -1,0 +1,4 @@
+title
+.subckt t a
+.param wlength
+.ends t

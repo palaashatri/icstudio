@@ -1,0 +1,4 @@
+mos
+.subckt m d g s b
+M1 d g s b nmos w=1u l=0.1u m=2
+.ends m

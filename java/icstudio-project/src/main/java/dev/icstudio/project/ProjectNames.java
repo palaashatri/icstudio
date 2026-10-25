@@ -6,7 +6,7 @@ final class ProjectNames {
 
     static String component(String kind, String value) {
         if (value == null || value.isEmpty() || value.length() > 128) {
-            throw new IllegalArgumentException(kind + " name must contain 1 to 128 characters");
+            throw new IllegalArgumentException(kind + " name must contain 1 to 128 bytes");
         }
         for (int index = 0; index < value.length(); index++) {
             char character = value.charAt(index);

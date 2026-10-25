@@ -1,0 +1,3 @@
+open
+.subckt a x
+R1 x x 1

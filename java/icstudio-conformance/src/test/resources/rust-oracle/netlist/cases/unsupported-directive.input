@@ -1,0 +1,4 @@
+tran
+.subckt t a
+.tran 1n 10n
+.ends t

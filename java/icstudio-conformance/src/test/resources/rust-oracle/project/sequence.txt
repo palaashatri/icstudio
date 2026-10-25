@@ -1,0 +1,8 @@
+0|add-library|analog
+1|add-cell|analog|inverter
+2|add-view|analog|inverter|schematic|schematic
+3|add-view|analog|inverter|symbol|symbol
+4|add-library|digital
+5|add-cell|digital|nand2
+6|add-view|digital|nand2|layout|layout
+7|add-cell|analog|buffer

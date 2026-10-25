@@ -59,6 +59,18 @@ public final class StudioTokens {
         return uiColor("ToolBar.background", windowBackground());
     }
 
+    /**
+     * Intended surface opacity for a material when native translucency is available. Engineering
+     * canvases and solid surfaces are always fully opaque.
+     */
+    public static float defaultOpacity(dev.icstudio.ui.material.StudioMaterial material) {
+        return switch (material) {
+            case CANVAS, SOLID -> 1.0f;
+            case SIDEBAR, TOOLBAR, INSPECTOR -> 0.94f;
+            case POPOVER, MENU, HUD -> 0.96f;
+        };
+    }
+
     public static Color canvasBackground() {
         return uiColor("TextArea.background", new Color(0xFAFAFA));
     }

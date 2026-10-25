@@ -1,0 +1,4 @@
+title
+.subckt bad a b
+Q1 a b c model
+.ends bad

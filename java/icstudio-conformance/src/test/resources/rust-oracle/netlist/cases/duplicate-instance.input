@@ -1,0 +1,5 @@
+dup
+.subckt t a
+R1 a a 1
+R1 a a 2
+.ends t

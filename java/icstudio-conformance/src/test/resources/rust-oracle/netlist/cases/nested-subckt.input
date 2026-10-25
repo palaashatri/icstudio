@@ -1,0 +1,4 @@
+nest
+.subckt a x
+.subckt b y
+.ends

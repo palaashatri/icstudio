@@ -1,0 +1,10 @@
+ICSTUDIO_PROJECT	1
+project	8edcffed14f32d0a3b5c7ce748f49995	8	oracle-demo
+library	34fbe9c2a0cda9921e7cfc45227b71e1	analog
+cell	bd0eda669bdb6364467470835d5b4c25	analog	buffer
+cell	6f8e78980f670d152c7829dd35204834	analog	inverter
+view	2564bddb649e9612b3afe2a6b88dc9bd	analog	inverter	schematic	schematic
+view	977342d177b88118bf80906f75b2df0f	analog	inverter	symbol	symbol
+library	f203f7bb782201fe17b62f9c886d1f2b	digital
+cell	1a492eaa530b2e73291b263b9bc474c0	digital	nand2
+view	0ffa7d1a5f93fda29fee3cdd8502597d	digital	nand2	layout	layout

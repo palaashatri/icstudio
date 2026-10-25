@@ -1,0 +1,6 @@
+* passives
+.subckt rc in out vss
+C1 out vss 1p ; kind=capacitor
+R1 in out 1k ; kind=resistor
+V1 in vss 1.8 ; kind=voltage_source
+.ends rc

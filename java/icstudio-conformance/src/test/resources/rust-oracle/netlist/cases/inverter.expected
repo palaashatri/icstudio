@@ -1,0 +1,6 @@
+* CMOS inverter
+.subckt inv in out vdd vss
+.param l=0.15u w=1u
+M1 out in vdd vdd pmos l=0.15u w=2u ; kind=mosfet
+M2 out in vss vss nmos l=0.15u w=1u ; kind=mosfet
+.ends inv

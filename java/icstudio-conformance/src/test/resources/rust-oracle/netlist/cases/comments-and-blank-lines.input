@@ -1,0 +1,7 @@
+commented
+* a comment
+
+.subckt c a
+
+R1 a a 1k
+.ends c

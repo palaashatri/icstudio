@@ -32,9 +32,16 @@ public record Library(ObjectId id, String name, NavigableMap<String, Cell> cells
     }
 
     public Library withView(String cellName, String viewName, String kind) {
+        ProjectNames.component("cell", cellName);
+        ProjectNames.component("view", viewName);
+        ProjectNames.component("view kind", kind);
         var cell = cells.get(cellName);
         if (cell == null) {
             throw new IllegalArgumentException("cell '" + name + "/" + cellName + "' does not exist");
+        }
+        if (cell.views().containsKey(viewName)) {
+            throw new IllegalArgumentException(
+                    "view '" + name + "/" + cellName + "/" + viewName + "' already exists");
         }
         var next = new TreeMap<>(cells);
         next.put(cellName, cell.withView(viewName, kind));

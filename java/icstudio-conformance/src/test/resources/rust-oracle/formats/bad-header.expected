@@ -1,0 +1,3 @@
+ok
+record	0	01	00	
+prefix	error	GDSII stream must begin with HEADER/int2 payload, found type 0x01/0x00
