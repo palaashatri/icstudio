@@ -7,6 +7,8 @@ import dev.icstudio.cli.IcStudioCli;
 import dev.icstudio.command.TransactionalProjectService;
 import dev.icstudio.mcp.McpServer;
 import dev.icstudio.platform.json.Json;
+import dev.icstudio.ui.workspace.ProjectWorkbench;
+import java.util.Map;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,5 +46,23 @@ class SurfaceEquivalenceTest {
         String response = mcpOut.toString(StandardCharsets.UTF_8).strip();
         assertTrue(response.contains("\"structuredContent\":" + expected + ","), response);
         assertTrue(response.contains("\"text\":\"" + Json.escape(expected) + "\""), response);
+    }
+
+    @Test
+    void swingWorkbenchDisplaysTheSameSnapshotAsTheSummary() throws IOException {
+        Path project = OracleCorpus.projectCopy(OracleCorpus.resolve("project/expected-final.icst"), temporary.resolve("swing"));
+        var snapshot = TransactionalProjectService.open(project).snapshot();
+        var summary = (Map<?, ?>) Json.parse(snapshot.summaryJson());
+
+        var workbench = new ProjectWorkbench();
+        workbench.bind(snapshot);
+        var shown = workbench.inspector().displayedProperties();
+
+        assertEquals(summary.get("name").toString(), shown.get("Name"));
+        assertEquals(summary.get("projectId").toString(), shown.get("Project ID"));
+        assertEquals(summary.get("revision").toString(), shown.get("Revision"));
+        assertEquals(summary.get("libraries").toString(), shown.get("Libraries"));
+        assertEquals(summary.get("cells").toString(), shown.get("Cells"));
+        assertEquals(summary.get("views").toString(), shown.get("Views"));
     }
 }

@@ -28,4 +28,20 @@ class ArchitectureContractTest {
         assertFalse(constitution.contains("Rust Platform Services"),
                 "Rust must not remain the authoritative platform after ADR-0001");
     }
+
+    @Test
+    void agentGuideNamesJavaAsTheOnlyAuthoritativeStack() throws IOException {
+        String agents = Files.readString(REPOSITORY.resolve("AGENTS.md"));
+
+        assertTrue(agents.contains("Java 25") && agents.contains("Swing"), "AGENTS.md must name Java 25 and Swing");
+        assertFalse(agents.contains("Electron/React workbench") && agents.contains("conformance oracle only"),
+                "AGENTS.md must not describe the retired Electron workbench as a live surface");
+    }
+
+    @Test
+    void retiredRustAndElectronApplicationStackIsAbsent() {
+        assertFalse(Files.exists(REPOSITORY.resolve("crates")), "Rust crates must be removed after J1 parity");
+        assertFalse(Files.exists(REPOSITORY.resolve("apps/workbench")), "the Electron workbench must be removed");
+        assertFalse(Files.exists(REPOSITORY.resolve("Cargo.toml")), "the Rust workspace must be removed");
+    }
 }

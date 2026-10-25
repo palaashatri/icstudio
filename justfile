@@ -32,6 +32,14 @@ cli-setup:
 cli *ARGS: cli-setup
     java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli {{ARGS}}
 
+# Desktop workbench (Swing + Skia). Pass --project PATH to open a project read-only.
+app-setup:
+    {{maven}} -q -pl java/icstudio-app -am install -DskipTests
+    {{maven}} -q -pl java/icstudio-app dependency:build-classpath -Dmdep.outputFile=target/classpath.txt -Dmdep.includeScope=runtime
+
+studio *ARGS: app-setup
+    java -cp "$(cat java/icstudio-app/target/classpath.txt):java/icstudio-app/target/classes" dev.icstudio.app.ICStudio {{ARGS}}
+
 validate: cli-setup
     java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli validate
 

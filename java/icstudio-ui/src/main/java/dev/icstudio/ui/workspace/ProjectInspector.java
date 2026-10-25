@@ -48,4 +48,13 @@ public final class ProjectInspector extends JPanel {
     public int rowCount() {
         return model.getRowCount();
     }
+
+    /** The property/value pairs currently displayed, in display order. */
+    public java.util.Map<String, String> displayedProperties() {
+        var properties = new java.util.LinkedHashMap<String, String>();
+        for (int row = 0; row < model.getRowCount(); row++) {
+            properties.put((String) model.getValueAt(row, 0), (String) model.getValueAt(row, 1));
+        }
+        return java.util.Collections.unmodifiableMap(properties);
+    }
 }

@@ -322,7 +322,7 @@ The desktop experience is professional, comfortable, and informed by Apple Human
     └── checkpoints/
 ```
 
-During ADR-0001 migration, the existing Rust crates and Electron/React workbench remain temporarily in their current paths as a **historical conformance oracle only**. They receive no new product capability work and are removed only after `CP-JAVA-M1-KERNEL` is accepted. Language-neutral schemas, test corpora, and historical checkpoints are retained.
+The ADR-0001 migration is complete. The Rust crates and the Electron/React workbench were removed after `CP-JAVA-M1-KERNEL` was accepted. Language-neutral schemas, the recorded Rust M1 behaviour (`java/icstudio-conformance/src/test/resources/rust-oracle/`), and historical checkpoints are retained as evidence.
 
 The project MUST NOT accumulate miscellaneous planning Markdown files. Engineering state belongs in this file, the root `AGENTS.md`, or structured files under `.project/`.
 
@@ -337,7 +337,7 @@ The project MUST NOT accumulate miscellaneous planning Markdown files. Engineeri
 - **Python 3.12+:** research, model generation, golden references, corpus generation, teaching, and user automation; never authoritative project state.
 - **CUDA/HIP and other accelerator languages:** optional acceleration behind tested CPU/reference behaviour.
 - **WASM:** preferred portable sandbox target where deterministic PCells/plugins benefit from it.
-- **Rust and TypeScript:** migration-only legacy implementation languages under ADR-0001. No new product capability is implemented in the old Rust/Electron stack after the architecture switch.
+- **Rust and TypeScript:** retired under ADR-0001. The Rust and Electron application code was removed at J2; no Rust or TypeScript is part of the build, and the recorded Rust M1 behaviour is retained only as test corpora.
 
 ## 7.2 Java and build baseline
 
@@ -374,7 +374,7 @@ Internally:
 - `uv` manages Python research/automation environments.
 - OCI containers provide reproducible CI images.
 - Java dependency resolution is locked by explicit versions, repository policy, SBOM, licence evidence, and reproducibility checks.
-- `just` may invoke the legacy Cargo/npm gates only while they remain required as migration-oracle evidence.
+- Cargo and npm are not part of the build. `just` runs only the Java reactor and its evidence gates.
 
 Agents MUST call canonical `just` targets rather than inventing undocumented build commands.
 
@@ -396,7 +396,9 @@ Migration proceeds in three gates:
 
 1. **J0 — Java factory:** Java 25/Maven builds, tests, licence/SBOM evidence, checkpoints, and Windows/macOS/Linux/container CI are accepted. Live truth becomes **2/100**.
 2. **J1 — Java M1 parity:** Java reproduces the M1 project, recovery, geometry, worker, PDK/netlist/result, CLI/MCP, Swing shell, Skia scene, and cross-surface equivalence contracts. Live truth becomes **8/100** and `CP-JAVA-M1-KERNEL` is created.
-3. **J2 — Legacy retirement:** old production Rust/Electron/Node application code is removed after J1 evidence is archived. Removing superseded code does not itself increase truth score.
+3. **J2 — Legacy retirement (complete):** the Rust/Electron/Node application code was removed after J1 evidence was archived. Removing superseded code does not itself increase truth score.
+
+Status: J0 is accepted at `CP-JAVA-M0-FACTORY` (live truth 2/100). J1 is accepted at `CP-JAVA-M1-KERNEL` (live truth 8/100). J2 is complete.
 
 Immediately after this architecture switch, live truth is **0/100**. The previous 8/100 remains preserved in `CP-M1-KERNEL` and historical evidence. No M2 schematic/simulation implementation may begin before J1 is accepted.
 
