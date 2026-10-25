@@ -48,7 +48,7 @@ sbom:
     cp target/icstudio.cdx.json artifacts/icstudio.cdx.json
 
 license-check: sbom
-    {{maven}} -pl java/icstudio-conformance test -Dtest=SbomLicencePolicyTest -Dsurefire.failIfNoSpecifiedTests=false
+    {{maven}} -pl java/icstudio-conformance -am test -Dtest=SbomLicencePolicyTest -Dsurefire.failIfNoSpecifiedTests=false
 
 checkpoint name: cli-setup
     java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli checkpoint --name {{name}}

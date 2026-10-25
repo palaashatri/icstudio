@@ -10,7 +10,7 @@ WORKDIR /workspace
 COPY . .
 
 RUN ./mvnw -B -ntp verify \
-    && ./mvnw -B -ntp -pl java/icstudio-conformance test -Dtest=SbomLicencePolicyTest -Dsurefire.failIfNoSpecifiedTests=false \
+    && ./mvnw -B -ntp -pl java/icstudio-conformance -am test -Dtest=SbomLicencePolicyTest -Dsurefire.failIfNoSpecifiedTests=false \
     && useradd --create-home --uid 10001 icstudio \
     && chown -R icstudio:icstudio /workspace
 
