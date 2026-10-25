@@ -1,24 +1,21 @@
-FROM rust:1.85.1-bookworm@sha256:e51d0265072d2d9d5d320f6a44dde6b9ef13653b035098febd68cce8fa7c0bc4
+# Reproducible Java factory: Eclipse Temurin 25.0.4+7, the Maven Wrapper, and a non-root runtime user.
+FROM eclipse-temurin:25.0.4_7-jdk-noble
 
-RUN cargo install just --locked --version 1.40.0
+# Skia (via Skija) links against EGL and GL at load time; the factory runs the Swing/Skia tests.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libegl1 libgl1 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 COPY . .
 
-RUN just bootstrap \
-    && just format-check \
-    && just lint \
-    && just build \
-    && just test-fast \
-    && just validate \
-    && just license-check \
-    && just mcp-smoke \
-    && just capability-report \
-    && just rust-sbom \
+RUN ./mvnw -B -ntp verify \
+    && ./mvnw -B -ntp -pl java/icstudio-conformance test -Dtest=SbomLicencePolicyTest -Dsurefire.failIfNoSpecifiedTests=false \
     && useradd --create-home --uid 10001 icstudio \
-    && chown -R icstudio:icstudio /workspace /usr/local/cargo
+    && chown -R icstudio:icstudio /workspace
 
 USER icstudio
 
-ENTRYPOINT ["cargo", "run", "--locked", "--quiet", "--bin", "icstudio", "--"]
+# The CLI has no third-party runtime dependencies; it runs from the reactor's compiled classes.
+ENTRYPOINT ["java", "-cp", "/workspace/java/icstudio-core/target/classes:/workspace/java/icstudio-project/target/classes:/workspace/java/icstudio-command/target/classes:/workspace/java/icstudio-platform/target/classes:/workspace/java/icstudio-cli/target/classes", "dev.icstudio.cli.IcStudioCli"]
 CMD ["truth"]
