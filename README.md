@@ -109,3 +109,11 @@ The SPICE and GDSII implementations are deliberately bounded parser scaffolds. T
 ## Licence
 
 Project-owned code and documentation are licensed under the [MIT License](LICENSE). Third-party dependencies are listed in the CycloneDX SBOM and must pass the allowlist in `SbomLicencePolicyTest`. See `docs/CONSTITUTION.md` for third-party, clean-room, PDK, model, and solver provenance requirements.
+
+## Future SLOPOS/PARAMA integration and Pi Zero 2 W efficiency
+
+**Planned only.** icstudio is an original project proposed for SLOPOS's **optional original SLOPOS electronic-design/EDA workbench**. Linux/SLOPOS integration must be validated against actual application workflows and dependencies. PARAMA is a future native port requiring its own kernel/runtime/graphics/filesystem/tooling proofs; this README does not claim executable compatibility.
+
+For the Raspberry Pi Zero 2 W (512 MB, quad Cortex-A53), prioritize: Lazy hierarchical schematic/layout tile rendering, visible-region clipping/damage only, capped vector/path caches, level-of-detail at low zoom, incremental PDK indexing, bounded netlist import and background DRC/simulation jobs. Provide progressive previews and cancellation, no full-chip solver on UI thread, no resident analysis toolchain when idle. Test tiny real schematics rather than claim Virtuoso-class signoff fits 512 MB.
+
+The low-memory profile must be demonstrated on real hardware with process/runtime and system-wide memory accounting, accurate output, cancellations and truthful unavailable states. **No Pi Zero 2 W or PARAMA support has been verified.** Detailed requirements: [AGENTS.md](AGENTS.md#future-sloposparama-targets-and-edge-efficiency-requirements).
