@@ -4,9 +4,9 @@ ICStudio workbench snapshot contract v1
 Authority
 ---------
 
-The Rust platform service owns project state. The Electron renderer MUST NOT read or parse
-project files. It receives the exact JSON object emitted by `Project::summary_json()` through
-the `icstudio-ui-bridge` process and a sandboxed Electron preload IPC handler.
+The Java project model owns project state. The Swing workbench MUST NOT read or parse project
+files. It receives an immutable ProjectSnapshot in-process from the transactional project
+service, and its JSON form is exactly `ProjectSnapshot.summaryJson()`.
 
 JSON fields
 -----------
@@ -19,26 +19,23 @@ libraries     : non-negative safe integer
 cells         : non-negative safe integer
 views         : non-negative safe integer
 
-No additional fields are accepted by the M1 renderer. The decoded object is immutable.
+No additional fields are accepted by the M1 workbench. The snapshot is immutable.
 
 Security boundary
 -----------------
 
-- Electron context isolation is enabled.
-- Renderer sandboxing is enabled.
-- Node integration is disabled.
-- The preload exposes only `readProjectSnapshot()`.
-- The bridge accepts one bounded `--path` argument and returns one JSON line.
-- UI code has no direct filesystem, subprocess, project mutation, or MCP privilege.
+- The workbench holds presentation state only: selection, scroll position, and layout.
+- It has no filesystem, subprocess, project mutation, or MCP privilege.
+- It binds a snapshot read-only; it cannot change the authoritative project.
+- Native rendering is confined to the Skia scene surface; Swing owns windowing and focus.
 
 Equivalence gate
 ----------------
 
-For the same project revision, all of these byte-level engineering payloads MUST agree:
+For the same project revision, all of these payloads MUST agree:
 
-1. `icstudio project show --path ...`
-2. `icstudio-ui-bridge --path ...`
+1. `icstudio project show --path ...` (CLI)
+2. The Swing inspector's displayed name, project ID, revision, and hierarchy counts
 3. MCP `project.inspect` structured content
 
-The Electron/React renderer decodes and displays that same payload without adding a second
-project model.
+`SurfaceEquivalenceTest` enforces this gate in `java/icstudio-conformance`.

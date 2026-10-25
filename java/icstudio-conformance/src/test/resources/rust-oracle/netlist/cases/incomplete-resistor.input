@@ -1,0 +1,4 @@
+title
+.subckt bad a b
+R1 a
+.ends bad

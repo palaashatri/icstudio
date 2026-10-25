@@ -9,34 +9,18 @@ on:
 permissions:
   contents: read
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  build-native-binaries:
-    name: ${{ matrix.artifact }}
+  build-reactor:
+    name: Reactor artifacts (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            artifact: icstudio-linux-x86_64
-            executable_suffix: ""
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            artifact: icstudio-windows-x86_64
-            executable_suffix: .exe
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            artifact: icstudio-macos-aarch64
-            executable_suffix: ""
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            artifact: icstudio-macos-x86_64
-            executable_suffix: ""
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
 
     steps:
       - name: Check out source
@@ -44,24 +28,34 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install pinned Rust toolchain and target
-        shell: bash
+      - name: Install Temurin JDK 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '25.0.4+7.0.LTS'
+          cache: maven
+
+      - name: Install Skia runtime libraries (Linux)
+        if: runner.os == 'Linux'
         run: |
-          rustup toolchain install 1.85.1 --profile minimal
-          rustup override set 1.85.1
-          rustup target add "${{ matrix.target }}"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libegl1 libgl1
 
-      - name: Build release binaries
-        run: cargo build --workspace --release --locked --target ${{ matrix.target }}
+      - name: Build and verify reactor (Unix)
+        if: runner.os != 'Windows'
+        run: ./mvnw -B -ntp verify
 
-      - name: Upload native binaries
+      - name: Build and verify reactor (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: .\mvnw.cmd -B -ntp verify
+
+      - name: Upload module jars and SBOM
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ${{ matrix.artifact }}
+          name: icstudio-reactor-${{ matrix.os }}
           path: |
-            target/${{ matrix.target }}/release/icstudio${{ matrix.executable_suffix }}
-            target/${{ matrix.target }}/release/icstudio-mcp${{ matrix.executable_suffix }}
-            target/${{ matrix.target }}/release/icstudio-ui-bridge${{ matrix.executable_suffix }}
-            target/${{ matrix.target }}/release/icstudio-worker${{ matrix.executable_suffix }}
+            java/*/target/*.jar
+            target/icstudio.cdx.json
           if-no-files-found: error
           retention-days: 30

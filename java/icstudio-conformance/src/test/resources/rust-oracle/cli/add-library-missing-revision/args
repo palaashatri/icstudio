@@ -1,0 +1,6 @@
+project
+add-library
+--path
+@FINAL@
+--name
+x

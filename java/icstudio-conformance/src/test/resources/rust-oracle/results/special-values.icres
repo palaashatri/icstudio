@@ -1,0 +1,7 @@
+ICSTUDIO_RESULTS	1
+run	run-1	0123456789abcdef0123456789abcdef	3	transient	deadbeef	reference	0.1.0
+signal	i(vdd)	A	4
+sample	8000000000000000	0010000000000000
+sample	0000000000000001	81b01297d23ab683
+sample	3fd5555555555555	7fefffffffffffff
+sample	7fe1ccf385ebc8a0	3fb999999999999a

@@ -98,6 +98,7 @@ public final class Project {
 
     public Project withCellAdded(String libraryName, String cellName) {
         ProjectNames.component("library", libraryName);
+        ProjectNames.component("cell", cellName);
         var library = libraries.get(libraryName);
         if (library == null) {
             throw new IllegalArgumentException("library '" + libraryName + "' does not exist");
@@ -114,6 +115,9 @@ public final class Project {
             String viewName,
             String kind) {
         ProjectNames.component("library", libraryName);
+        ProjectNames.component("cell", cellName);
+        ProjectNames.component("view", viewName);
+        ProjectNames.component("view kind", kind);
         var library = libraries.get(libraryName);
         if (library == null) {
             throw new IllegalArgumentException("library '" + libraryName + "' does not exist");

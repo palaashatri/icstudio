@@ -1,0 +1,12 @@
+project
+add-library
+--path
+@FINAL@
+--name
+digital2
+--expected-revision
+0
+--request-id
+cli-test
+--actor
+cli

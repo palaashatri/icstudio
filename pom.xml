@@ -25,7 +25,19 @@
     <module>java/icstudio-core</module>
     <module>java/icstudio-project</module>
     <module>java/icstudio-command</module>
+    <module>java/icstudio-geometry</module>
+    <module>java/icstudio-connectivity</module>
+    <module>java/icstudio-pdk</module>
+    <module>java/icstudio-netlist-ir</module>
+    <module>java/icstudio-result-db</module>
+    <module>java/icstudio-experiment</module>
+    <module>java/icstudio-platform</module>
+    <module>java/icstudio-worker</module>
+    <module>java/icstudio-cli</module>
+    <module>java/icstudio-mcp</module>
     <module>java/icstudio-ui</module>
+    <module>java/icstudio-app</module>
+    <module>java/icstudio-conformance</module>
   </modules>
 
   <properties>
@@ -34,9 +46,12 @@
     <maven.compiler.release>25</maven.compiler.release>
     <maven.compiler.plugin.version>3.15.0</maven.compiler.plugin.version>
     <maven.enforcer.plugin.version>3.6.3</maven.enforcer.plugin.version>
+    <maven.jar.plugin.version>3.5.0</maven.jar.plugin.version>
     <maven.surefire.plugin.version>3.5.6</maven.surefire.plugin.version>
+    <cyclonedx.plugin.version>2.9.3</cyclonedx.plugin.version>
     <junit.version>6.1.2</junit.version>
     <flatlaf.version>3.7.2</flatlaf.version>
+    <skija.version>0.143.17</skija.version>
     <project.build.outputTimestamp>2026-08-30T00:00:00Z</project.build.outputTimestamp>
   </properties>
 
@@ -71,9 +86,43 @@
             <useModulePath>false</useModulePath>
           </configuration>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>${maven.jar.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.cyclonedx</groupId>
+          <artifactId>cyclonedx-maven-plugin</artifactId>
+          <version>${cyclonedx.plugin.version}</version>
+        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
+      <plugin>
+        <groupId>org.cyclonedx</groupId>
+        <artifactId>cyclonedx-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>icstudio-sbom</id>
+            <inherited>false</inherited>
+            <phase>verify</phase>
+            <goals>
+              <goal>makeAggregateBom</goal>
+            </goals>
+            <configuration>
+              <projectType>library</projectType>
+              <schemaVersion>1.6</schemaVersion>
+              <outputFormat>json</outputFormat>
+              <outputName>icstudio.cdx</outputName>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <includeBomSerialNumber>false</includeBomSerialNumber>
+              <includeLicenseText>false</includeLicenseText>
+              <includeTestScope>false</includeTestScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>

@@ -1,0 +1,5 @@
+ICSTUDIO_PDK	1
+technology	open_demo	1000
+layer	metal1	drawing	68	20
+layer	metal1	pin	68	16
+model	tt	spice	models/tt.spice

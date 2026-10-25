@@ -1,10 +1,7 @@
-/target/
+target/
 /artifacts/
-/apps/workbench/node_modules/
-/apps/workbench/dist-main/
-/apps/workbench/dist-renderer/
-/.idea/
-/.vscode/
+.idea/
+.vscode/
 .DS_Store
 Thumbs.db
 *.log

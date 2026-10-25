@@ -1,0 +1,6 @@
+passives
+.subckt rc in out vss
+R1 in out 1k
+C1 out vss 1p
+V1 in vss 1.8
+.ends rc

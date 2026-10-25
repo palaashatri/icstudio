@@ -1,0 +1,8 @@
+0|add-library|digital	revision conflict: expected 0, current 8
+8|add-library|analog	library 'analog' already exists
+8|add-library|bad name	library name 'bad name' contains unsupported characters
+8|add-cell|missing|x	library 'missing' does not exist
+8|add-cell|analog|inverter	cell 'analog/inverter' already exists
+8|add-view|analog|nope|schematic|schematic	cell 'analog/nope' does not exist
+8|add-view|analog|inverter|schematic|schematic	view 'analog/inverter/schematic' already exists
+8|add-view|analog|inverter|x|bad/kind	view kind name 'bad/kind' contains unsupported characters

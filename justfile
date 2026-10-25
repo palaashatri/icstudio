@@ -1,67 +1,67 @@
 set dotenv-load := false
 
+# Authoritative stack: Java 25 + Maven Wrapper (ADR-0001). Every task runs through the reactor.
+maven := "./mvnw -B -ntp"
+cli-classpath := "java/icstudio-cli/target/classpath.txt"
+
 bootstrap:
-    cargo fetch --locked
-
-ui-bootstrap:
-    node apps/workbench/scripts/run-npm.mjs ci --ignore-scripts --no-audit --no-fund
-
-format:
-    cargo fmt --all
-
-format-check:
-    cargo fmt --all -- --check
-
-lint:
-    cargo clippy --workspace --all-targets --locked -- -D warnings
+    {{maven}} -DskipTests install
 
 build:
-    cargo build --workspace --all-targets --locked
-
-ui-build: ui-bootstrap
-    node apps/workbench/scripts/run-npm.mjs run build
+    {{maven}} -DskipTests package
 
 test-fast:
-    cargo test --workspace --all-targets --locked
+    {{maven}} test
 
-ui-test: ui-bootstrap
-    node apps/workbench/scripts/run-npm.mjs test
+verify:
+    {{maven}} verify
 
-ui-license-check: ui-bootstrap
-    node apps/workbench/scripts/run-npm.mjs run license-check
-
-ui-check: ui-build ui-test ui-license-check
-
+# One-million-shape reference geometry baseline (CP-M1-KERNEL parity gate).
 test-m1-geometry:
-    cargo test --release --locked -p icstudio-geometry indexes_and_queries_one_million_simple_shapes -- --ignored
+    {{maven}} -pl java/icstudio-conformance -am test -Dtest=GeometryOracleTest -Dsurefire.failIfNoSpecifiedTests=false
 
-validate:
-    cargo run --locked --quiet --bin icstudio -- validate
-
-truth:
-    cargo run --locked --quiet --bin icstudio -- truth
-
-capability-report:
-    cargo run --locked --quiet --bin icstudio -- capabilities --output artifacts/capability-report.md
-
-rust-sbom:
-    cargo run --locked --quiet --bin icstudio -- sbom --output artifacts/icstudio.spdx.json
-
-ui-sbom: ui-bootstrap
-    node apps/workbench/scripts/run-npm.mjs run sbom
-
-sbom: rust-sbom ui-sbom
-
-license-check:
-    cargo run --locked --quiet --bin icstudio -- license-check
-
+# Stdio MCP and cross-surface equivalence gates.
 mcp-smoke:
-    cargo test --locked --test mcp_stdio
+    {{maven}} -pl java/icstudio-conformance -am test -Dtest=McpOracleTest,SurfaceEquivalenceTest -Dsurefire.failIfNoSpecifiedTests=false
 
-checkpoint name:
-    cargo run --locked --quiet --bin icstudio -- checkpoint --name {{name}}
+# Compile and record the headless CLI classpath once, then run commands against it.
+cli-setup:
+    {{maven}} -q -pl java/icstudio-cli -am install -DskipTests
+    {{maven}} -q -pl java/icstudio-cli dependency:build-classpath -Dmdep.outputFile=target/classpath.txt -Dmdep.includeScope=runtime
 
-resume-check name:
-    cargo run --locked --quiet --bin icstudio -- resume-check --checkpoint {{name}}
+cli *ARGS: cli-setup
+    java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli {{ARGS}}
 
-ci: format-check lint build test-fast ui-check validate license-check mcp-smoke
+# Desktop workbench (Swing + Skia). Pass --project PATH to open a project read-only.
+app-setup:
+    {{maven}} -q -pl java/icstudio-app -am install -DskipTests
+    {{maven}} -q -pl java/icstudio-app dependency:build-classpath -Dmdep.outputFile=target/classpath.txt -Dmdep.includeScope=runtime
+
+studio *ARGS: app-setup
+    java -cp "$(cat java/icstudio-app/target/classpath.txt):java/icstudio-app/target/classes" dev.icstudio.app.ICStudio {{ARGS}}
+
+validate: cli-setup
+    java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli validate
+
+truth: cli-setup
+    java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli truth
+
+capability-report: cli-setup
+    java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli capabilities --output artifacts/capability-report.md
+
+# CycloneDX aggregate SBOM covering the Java reactor, archived under artifacts/.
+sbom:
+    {{maven}} -DskipTests verify
+    mkdir -p artifacts
+    cp target/icstudio.cdx.json artifacts/icstudio.cdx.json
+
+license-check: sbom
+    {{maven}} -pl java/icstudio-conformance -am test -Dtest=SbomLicencePolicyTest -Dsurefire.failIfNoSpecifiedTests=false
+
+checkpoint name: cli-setup
+    java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli checkpoint --name {{name}}
+
+resume-check name: cli-setup
+    java -cp "$(cat {{cli-classpath}}):java/icstudio-cli/target/classes" dev.icstudio.cli.IcStudioCli resume-check --checkpoint {{name}}
+
+ci: verify validate license-check truth

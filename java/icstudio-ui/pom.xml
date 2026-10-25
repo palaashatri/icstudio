@@ -16,9 +16,35 @@
 
   <dependencies>
     <dependency>
+      <groupId>dev.icstudio</groupId>
+      <artifactId>icstudio-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.icstudio</groupId>
+      <artifactId>icstudio-project</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.icstudio</groupId>
+      <artifactId>icstudio-platform</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>dev.icstudio</groupId>
+      <artifactId>icstudio-command</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf</artifactId>
       <version>${flatlaf.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.humbleui</groupId>
+      <artifactId>skija-shared</artifactId>
+      <version>${skija.version}</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -39,4 +65,72 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>skija-linux-x64</id>
+      <activation>
+        <os><family>unix</family><name>Linux</name><arch>amd64</arch></os>
+      </activation>
+      <dependencies>
+    <dependency>
+      <groupId>io.github.humbleui</groupId>
+      <artifactId>skija-linux-x64</artifactId>
+      <version>${skija.version}</version>
+    </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>skija-linux-arm64</id>
+      <activation>
+        <os><family>unix</family><name>Linux</name><arch>aarch64</arch></os>
+      </activation>
+      <dependencies>
+    <dependency>
+      <groupId>io.github.humbleui</groupId>
+      <artifactId>skija-linux-arm64</artifactId>
+      <version>${skija.version}</version>
+    </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>skija-windows-x64</id>
+      <activation>
+        <os><family>windows</family><arch>amd64</arch></os>
+      </activation>
+      <dependencies>
+    <dependency>
+      <groupId>io.github.humbleui</groupId>
+      <artifactId>skija-windows-x64</artifactId>
+      <version>${skija.version}</version>
+    </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>skija-macos-x64</id>
+      <activation>
+        <os><family>mac</family><arch>x86_64</arch></os>
+      </activation>
+      <dependencies>
+    <dependency>
+      <groupId>io.github.humbleui</groupId>
+      <artifactId>skija-macos-x64</artifactId>
+      <version>${skija.version}</version>
+    </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>skija-macos-arm64</id>
+      <activation>
+        <os><family>mac</family><arch>aarch64</arch></os>
+      </activation>
+      <dependencies>
+    <dependency>
+      <groupId>io.github.humbleui</groupId>
+      <artifactId>skija-macos-arm64</artifactId>
+      <version>${skija.version}</version>
+    </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>
