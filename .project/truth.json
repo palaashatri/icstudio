@@ -2,8 +2,8 @@
   "schema_version": 1,
   "final_target": "ICStudio 1.0 as defined by docs/CONSTITUTION.md M8",
   "score_formula": "sum(milestone.weight * milestone.completion)",
-  "reported_score": 2.0,
-  "assessment": "ADR-0001 Java factory (J0) accepted; M0 credit restored to 2/100",
+  "reported_score": 8.0,
+  "assessment": "ADR-0001 Java M1 parity (J1) accepted at CP-JAVA-M1-KERNEL; M1 credit restored to 8/100",
   "milestones": [
     {
       "id": "M0",
@@ -23,26 +23,14 @@
       "id": "M1",
       "name": "Design kernel and headless skeleton",
       "weight": 6.0,
-      "completion": 0.0,
-      "status": "migration-required",
+      "completion": 1.0,
+      "status": "accepted",
       "evidence": [
-        "GitHub Actions run 30775698631 hardened project RPC MCP and evidence foundations on Ubuntu macOS Windows and the pinned non-root container",
-        "GitHub Actions run 30776034205 validated eight dependency-free workspace crates on Ubuntu macOS Windows and the pinned non-root container",
-        "Project create/save/reopen hierarchy test passed",
-        "Injected-termination journal recovery and immutable checkpoint tests passed",
-        "Deterministic project PDK and result serialization round trips passed",
-        "One-million-shape geometry baseline passed on Ubuntu release build",
-        "Worker crash isolation passed",
-        "CLI and MCP project state/revision equivalence and top-level JSON-RPC correlation passed",
-        "PDK layer-purpose and model-reference validation passed",
-        "Structural CMOS inverter SPICE parsing passed",
-        "GDSII record framing and malformed-input tests passed",
-        "Project RPC PDK and result version-1 schemas published",
-        "GitHub Actions run 30795833188 passed Ubuntu macOS Windows and pinned non-root Linux container",
-        "Electron and React workbench shell built from the locked npm graph",
-        "WebGPU scene prototype bundle and compiled shell security tests passed",
-        "CLI UI bridge and MCP project state/revision equivalence passed",
-        "npm lockfile version 3 with SHA-256-bound licence and SPDX evidence"
+        "Java J1 parity accepted at CP-JAVA-M1-KERNEL",
+        "GitHub Actions run 40180049285 (accepted commit f8db4ae0c0fecfc83b6744b9909c6a180224ab0e)",
+        "29 oracle and contract tests replay the recorded Rust M1 kernel",
+        "CLI, MCP, and Swing equivalence on the same snapshot and revision",
+        "One-million-shape geometry baseline, worker crash isolation, and project crash recovery passed"
       ]
     },
     {

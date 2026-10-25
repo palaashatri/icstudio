@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "name": "CP-JAVA-M1-KERNEL",
+  "created_unix": 1792920226,
+  "git_commit": "b461df4777c61f2b608659e904a8e881c8ba4335",
+  "capabilities_hash": "01f17cc93b19fce3",
+  "truth_hash": "50081c2ba5b3252b",
+  "truth_score": 8.0,
+  "evidence": {
+    "accepted_code_commit": "f8db4ae0c0fecfc83b6744b9909c6a180224ab0e",
+    "checkpoint_git_commit_note": "HEAD at creation; differs from accepted_code_commit only by .project acceptance files",
+    "workflow_run": "https://github.com/palaashatri/icstudio/actions/runs/40180049285",
+    "gates": [
+      "Rust oracle differential suite (29 tests) passed on ubuntu-latest, macos-latest, windows-latest",
+      "One-million-shape geometry baseline with identical hit set",
+      "Worker crash isolation and project crash recovery",
+      "CLI, MCP, and Swing snapshot and revision equivalence",
+      "Reproducible non-root Temurin 25 factory image passed",
+      "Dependency licence allowlist and CycloneDX SBOM passed"
+    ]
+  }
+}

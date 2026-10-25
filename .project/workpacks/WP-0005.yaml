@@ -1,6 +1,6 @@
 id: WP-0005
 title: Java 25 Swing authoritative-stack migration
-status: planned
+status: in_progress
 priority: critical
 milestone: migration-J0-J1-J2
 owner: implementation-agent
@@ -571,3 +571,7 @@ checkpoint:
   notes: >-
     This work package is the execution plan for ADR-0001. It does not authorize M2 work
     until Java M1 parity is independently accepted.
+progress:
+  J0: accepted at CP-JAVA-M0-FACTORY (WP-0006), truth 2/100
+  J1: accepted at CP-JAVA-M1-KERNEL, truth 8/100, accepted_code_commit f8db4ae0c0fecfc83b6744b9909c6a180224ab0e, workflow_run 40180049285
+  J2: Rust and Electron application removal in progress; oracle corpus retained under java/icstudio-conformance/src/test/resources/rust-oracle
