@@ -1,6 +1,6 @@
 id: WP-0006
 title: Java J0 reproducible factory
-status: planned
+status: accepted
 priority: critical
 milestone: J0
 parent: WP-0005
@@ -17,3 +17,12 @@ acceptance:
   - checkpoint CP-JAVA-M0-FACTORY
 truth_on_acceptance: 2.0
 m2_blocked: true
+acceptance_evidence:
+  accepted_commit: f8db4ae0c0fecfc83b6744b9909c6a180224ab0e
+  workflow_run: https://github.com/palaashatri/icstudio/actions/runs/40180049285
+  checkpoint: CP-JAVA-M0-FACTORY
+  truth_after_acceptance: 2.0
+  gates:
+    - Ubuntu, macOS, and Windows Java reactor passed with the Maven 3.9.16 wrapper
+    - CycloneDX 1.6 SBOM generated; licence allowlist enforced
+    - Reproducible Temurin 25.0.4+7 non-root factory image passed
