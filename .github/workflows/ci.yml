@@ -65,7 +65,7 @@ jobs:
       - name: Enforce dependency licence policy (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: .\mvnw.cmd -B -ntp -pl java/icstudio-conformance -am test -Dtest=SbomLicencePolicyTest -Dsurefire.failIfNoSpecifiedTests=false
+        run: .\mvnw.cmd -B -ntp -pl java/icstudio-conformance -am test '-Dtest=SbomLicencePolicyTest' '-Dsurefire.failIfNoSpecifiedTests=false'
 
       - name: Upload CycloneDX SBOM
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
