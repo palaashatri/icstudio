@@ -1,5 +1,10 @@
 # ICStudio
 
+<img src="assets/brand/app-icon.svg" alt="ICStudio icon" width="96" align="right" />
+
+[Icon, wordmark, and brand assets](assets/brand/README.md)
+
+
 ICStudio is an MIT-licensed, local-first custom-IC design and signoff platform under active clean-room development.
 
 The authoritative product, solver, architecture, validation, and milestone contract is [`docs/CONSTITUTION.md`](docs/CONSTITUTION.md). Instructions for coding agents (commands, rules, workflow) are in [`AGENTS.md`](AGENTS.md).

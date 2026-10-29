@@ -1,0 +1,13 @@
+{
+  "name": "ICStudio",
+  "category": "Integrated circuit design",
+  "background": [
+    "#4c4a4b",
+    "#292c33"
+  ],
+  "accent": "#d5b88b",
+  "highlight": "#f4e1b8",
+  "typography": "Inter, Segoe UI, Arial",
+  "style": "muted-metal / enamel / soft-depth",
+  "license": "original project artwork"
+}
