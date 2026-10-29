@@ -1,3 +1,3 @@
-# ICSTUDIO visual identity
+# ICStudio identity set
 
-Original matching dark-slate vector assets for Circuit design: full-color icon, monochrome icon, horizontal wordmark, 1200×630 social banner, and palette tokens. Source SVGs export to all required resolutions. Proposed separately for visual review; application resources and runtime unchanged.
+Original sculpted emerald IC chip with gold contacts, tailored to integrated-circuit design rather than a camera/vision app. Includes transparent source PNG, 16–1024px PNGs, ICO, ICNS, wordmark, social art. Supersedes rejected flat vector icon placeholders. 512/1024 PNGs are resampled from an approximately 248px generated tile crop; these are not native large masters. Review before app integration and leave PR as draft.
